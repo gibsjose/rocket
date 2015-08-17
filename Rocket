@@ -2,11 +2,12 @@
 
 #   Rocket
 #
-#   Joe Gibson      (gibsjose@mail.gvsu.edu)
+#   Joe Gibson (gibsjose@mail.gvsu.edu)
 #
 #   17 August 2015
 #
-#   www.gibsjose.com
+#   http://gibsjose.com
+#   http://github.com/gibsjose/Rocket
 
 from enum import Enum
 import sys, os, traceback, optparse
