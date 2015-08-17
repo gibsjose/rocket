@@ -1,11 +1,11 @@
 /**********************************************************
-*	Rocket C++ Template - Main
+*	{TITLE}
 *
-*	Author        (author@example.com)
+*	{AUTHORS}
 *
-*	DD MONTH YYYY
+*	{DD MONTH YYYY}
 *
-*   www.example.com
+*   {WEBSITES}
 **********************************************************/
 
 #include <iostream>

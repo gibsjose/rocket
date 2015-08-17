@@ -1,11 +1,11 @@
 /**********************************************************
-*	Rocket C Template - Main
+*	{TITLE}
 *
-*	Author        (author@example.com)
+*	{AUTHORS}
 *
-*	DD MONTH YYYY
+*	{DD MONTH YYYY}
 *
-*   www.example.com
+*   {WEBSITES}
 **********************************************************/
 
 #include <stdio.h>
@@ -13,6 +13,6 @@
 
 int main(int argc, char * argv[]) {
     printf("Rocket!\n");
-    
+
     return 0;
 }
