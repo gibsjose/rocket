@@ -10,6 +10,40 @@ Finally, `Rocket` can be configured to start a new `git` repository in the proje
 
 You can also specify your license type for open source projects, such as MIT, GNU GPL, Apache, etc.
 
+## Installation
+Clone with:
+```bash
+git clone https://github.com/gibsjose/Rocket.git
+```
+
+Then install:
+```bash
+cd Rocket
+sudo ./install
+```
+
+## Usage
+First, create a new project directory and name it something clever, like `Project`:
+
+```bash
+cd ~
+mkdir "Project"
+```
+
+Then hop into the newly created directory and run Rocket:
+```bash
+cd Project
+Rocket -l C++
+```
+
+This will create a new C++ project in the `Project` directory, including a `config.json` configuration file. Edit `config.json` with your project's name, your name and email, and any other details, then run:
+
+```bash
+Rocket config
+```
+
+And you're done!
+
 ## Configuration
 Configuration is done through a simple `config.json` file using JSON syntax to define parameters such as the project name, author names and emails, project websites, license type, etc.
 
