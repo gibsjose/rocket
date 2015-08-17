@@ -6,12 +6,31 @@ Configurable C, C++, and Python skeleton projects with configurable makefiles an
 
 `Rocket` also generates and configures a generic makefile for C and C++ projects.
 
-Finally, `Rocket` can be configured to start a new `git` repository in the project directory, use a generic `.gitignore`, and even create and push to a new GitHub remote repository.
+Finally, `Rocket` can be configured to start a new `git` repository in the project directory, generate a `README.md`, use a language-specific `.gitignore`, and even create and push to a new GitHub remote repository.
 
 You can also specify your license type for open source projects, such as MIT, GNU GPL, Apache, etc.
 
 ## Configuration
 Configuration is done through a simple `config.json` file using JSON syntax to define parameters such as the project name, author names and emails, project websites, license type, etc.
+
+The following simple `config.json` file shows all possible options:
+```json
+{
+    "project": "Rocket",
+
+    "authors": [
+        {"name": "John Engineer", "email": "john@engineer.com"}
+        {"name": "Joe Scientist", "email": "joe@scientist.com"}
+    ],
+
+    "websites": [
+        "https://www.example.com",
+        "https://github.com/user/example"
+    ],
+
+    "license": "MIT"
+}
+```
 
 ## GitHub
 `Rocket` uses `hub create` to create the new GitHub repository. It then runs `git push --set-upstream origin master` to make the first push to the master branch of the remote repository.
