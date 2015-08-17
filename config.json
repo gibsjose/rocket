@@ -1,0 +1,13 @@
+{
+    "authors": [
+        {"name": "John Engineer", "email": "john@engineer.com"}
+        {"name": "Joe Scientist", "email": "joe@scientist.com"}
+    ],
+
+    "project": "Rocket",
+
+    "websites": [
+        "https://www.example.com",
+        "https://github.com/user/example"
+    ]
+}
