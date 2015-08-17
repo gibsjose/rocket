@@ -20,51 +20,137 @@ import datetime
 import json
 from pprint import pprint
 
-def main ():
+class Language(Enum):
+    """
+    Defines the available languages as enumerated types
+    """
+    unkown = 0
+    c = 1
+    cpp = 2
+    avr_c = 3
+    avr_cpp = 4
+    python = 5
+
+# Global language dictionary
+LanguageDictionary = {
+    'c': Language.c,
+    'cpp': Language.cpp,
+    'c++': Language.cpp,
+    'avr-c': Language.avr_c,
+    'avr-cpp': Language.avr_cpp,
+    'avr-c++': Language.avr_cpp,
+    'python': Language.python
+}
+
+class Rocket:
+    """
+    Defines the Rocket object for creating project/code templates
+    """
+    def __init__(self):
+        """
+        Rocket default constructor
+        """
+        self.language = Language.unknown
+
+    def Generate(self, language):
+        """
+        Generates the skeleton code, makefiles (if necessary), gitignore
+        files, etc. and generates a default `config.json` object
+        """
+        # Set language
+        lang = language.lower()
+        if lang in LanguageDictionary:
+            self.language = LanguageDictionary[lang]
+        else:
+            self.language = Language.unknown
+            raise Exception('Unknown language')
+
+        # Pull correct files and copy them to local directory
+        self.directory = os.getcwd()
+
+        # Create default `config.json` object
+
+    def Config(self):
+        """
+        Pull from the generated and (maybe) edited `config.json` file, and
+        make changes to comment header blocks
+        """
+        # Get current date in `DD MONTH YYYY` format
+        today = datetime.date.today()
+        self.date = today.strftime('%d %b %Y')
+
+        # @TODO Issue exception if `config.json` does not exist
+
+        # Read config JSON data
+        with open('config.json', encoding='utf-8') as config_file:
+            # Load JSON data
+            self.data = json.loads(config_file.read())
+
+            # Set language
+            lang = self.data["language"].lower()
+            if lang in LanguageDictionary:
+                self.language = LanguageDictionary[lang]
+            else:
+                self.language = Language.unknown
+                raise Exception('Unknown language')
+
+        # Modify skeleton files/makefiles with data from `config.json`
+        self.directory = os.getcwd()
+
+    def Print(self):
+        """
+        Prints the configuration data in a nice format
+        """
+        print('Project: ' + self.data["project"])
+
+        print('Date: ' + self.date)
+
+        print('Language: ' + self.data["language"])
+
+        for author in self.data["authors"]:
+            print('Author: ' + author["name"] + ' Email: ' + author["email"])
+
+        for website in self.data["websites"]:
+            print('Website: ' + website)
+
+        print('License: ' + self.data["license"])
+
+def main():
+    """
+    Rocket main
+    """
     global options, args
+
+    print('-------')
+    print('Rocket!')
+    print('-------')
 
     if options.verbose:
         print('OPTIONS')
         print('-------')
-        if options.config:
-            print('\tConfig file: ' + options.config)
         if options.language:
             print('\tLanguage: ' + options.language)
 
-    # Get current date in `DD MONTH YYYY` format
-    today = datetime.date.today()
-    date = today.strftime('%d %b %Y')
+        if options.config:
+            print('\tConfiguring with \'config.json\'')
 
-    # Show config data
-    if options.config:
-        with open(options.config, encoding='utf-8') as config_file:
-            data = json.loads(config_file.read())
+    if options.language:
+        rocket = Rocket()
+        rocket.Generate(options.language)
 
-        # Print raw JSON data
-        # pprint(data)
-        # print('')
+    elif options.config:
+        rocket = Rocket()
+        rocket.Config()
 
-        # Parse and Print data manually
-        print('Project: ' + data["project"])
-
-        print('Date: ' + date)
-
-        for author in data["authors"]:
-            print('Author: ' + author["name"] + ' Email: ' + author["email"])
-
-        for website in data["websites"]:
-            print('Website: ' + website)
-
-        print('License: ' + data["license"])
-
-    print('\n\nRocket!')
+    else:
+        raise Exception('Must specify language with \'-l LANGUAGE\' or run config with \'-c\' or \'--config\'')
 
 if __name__ == '__main__':
     try:
         start_time = time.time()
         parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='0.1.0')
 
-        parser.add_option('-c', '--config', action='store', type='string', dest='config', help='JSON config file')
+        parser.add_option('-c', '--config', action='store_true', default=False, help='Configure project using config.json file')
 
         parser.add_option('-l', '--language', action='store', type='string', dest='language', help='language')
 

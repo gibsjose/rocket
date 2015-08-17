@@ -1,6 +1,8 @@
 {
     "project": "Rocket",
 
+    "language": "C",
+
     "authors": [
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
