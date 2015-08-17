@@ -19,7 +19,7 @@ The following simple `config.json` file shows all possible options:
     "project": "Rocket",
 
     "authors": [
-        {"name": "John Engineer", "email": "john@engineer.com"}
+        {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
 
