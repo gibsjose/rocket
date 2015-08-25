@@ -11,4 +11,5 @@
 * Have separate `git.json` config file?
 * Add `blinky` examples in C and C++ for AVR microcontrollers
 * Add `arduino` as 'language', with makefile, gitignore, and example (blinky from Arduino IDE)
-* For AVR microcontroller and Arduino makefiles, print message to screen after configuration to run `export PORT=...` and `export PROGRAMMER=...` for `avrdude` 
+* For AVR microcontroller and Arduino makefiles, print message to screen after configuration to run `export PORT=...` and `export PROGRAMMER=...` for `avrdude`
+* Add `license-url` attribute to `config.json` and `{LICENSE} to headers, add license type and URL if exists`
