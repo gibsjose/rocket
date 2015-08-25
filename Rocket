@@ -17,7 +17,7 @@ import re
 import operator
 import time
 import datetime
-import fileinput
+import tempfile
 
 # JSON and Pretty Print
 import json
@@ -274,41 +274,63 @@ class CommentFiller:
         if not os.path.exists(filepath):
             raise Exception('Cannot modify \'' + filepath + '\': Does not exist')
 
-        with open(filepath, 'r+') as f:
-            old = f.readlines() # Pull the file contents to a list
-            f.seek(0) # Jump to start, so we overwrite instead of appending
-            for line in old:
-                # {TITLE}
-                f.write(line.replace('\{TITLE\}', self.configuration.project), end='')
+        #Create temp file
+        fh, abs_path = tempfile.mkstemp()
+        with open(abs_path,'w') as new_file:
+            with open(filepath) as old_file:
+                for line in old_file:
+                    # {TITLE}
+                    if '{TITLE}' in line:
+                        new_file.write(line.replace('{TITLE}', self.configuration.project))
 
-                # {AUTHORS}
-                first_author = self.configuration.authors[0]
-                auth = first_author['name'];
-                if 'email' in first_author:
-                    auth += ' (' + first_author['email'] + ')'
+                    # {AUTHORS}
+                    elif '{AUTHORS}' in line:
+                        first_author = self.configuration.authors[0]
+                        auth = first_author['name'];
+                        if 'email' in first_author:
+                            auth += ' (' + first_author['email'] + ')'
 
-                if len(self.configuration.authors) > 1:
-                    auth_iter = iter(self.configuration.authors)
-                    next(auth_iter)
-                    for author in auth_iter:
-                        auth += '\n*\t' + author['name']
-                        if 'email' in author:
-                            auth += ' (' + author['email'] + ')'
+                        new_file.write(line.replace('{AUTHORS}', auth))
 
-                f.write(line.replace('\{AUTHORS\}', auth), end='')
+                        if len(self.configuration.authors) > 1:
+                            auth_iter = iter(self.configuration.authors)
+                            next(auth_iter)
+                            for author in auth_iter:
+                                auth = author['name']
+                                if 'email' in author:
+                                    auth += ' (' + author['email'] + ')'
 
-                # {DD MONTH YYYY}
-                f.write(line.replace('\{DD MONTH YYYY\}', self.configuration.date), end='')
+                                new_file.write('\n*\t' + auth)
 
-                # {WEBSITES}
-                if len(self.configurations.websites) > 0:
-                    webs = self.configuration.websites[0]
-                    webs_iter = iter(self.configuration.websites)
-                    next(webs_iter)
-                    for website in webs_iter:
-                        webs += '\n*\t' + website
+                    # {DD MONTH YYYY}
+                    elif '{DD MONTH YYYY}' in line:
+                        new_file.write(line.replace('{DD MONTH YYYY}', self.configuration.date))
 
-                f.write(line.replace('\{WEBSITES\}', webs), end='')
+                    # {WEBSITES}
+                    elif '{WEBSITES}' in line:
+                        if len(self.configuration.websites) > 0:
+                            new_file.write(line.replace('{WEBSITES}', self.configuration.websites[0]))
+
+                            webs_iter = iter(self.configuration.websites)
+                            next(webs_iter)
+                            for website in webs_iter:
+                                new_file.write('\n*\t' + website)
+
+                    # @TODO If '.c' or '.cpp' also need to edit '#include "rocket.h"'
+
+                    # @TODO If '.h' also need to edit '#ifndef ...'
+
+                    else:
+                        new_file.write(line)
+
+        # Close file
+        os.close(fh)
+
+        #Remove original file
+        os.remove(filepath)
+
+        #Move new file
+        shutil.move(abs_path, filepath)
 
         print('\t> Updated ' + filepath)
 
@@ -627,6 +649,10 @@ class Rocket:
             configuration.Decode(directory + '/config.json')
             configuration.Print()
 
+        # @TODO Add 'files' attribute to 'config.json' when generating as files are added and only use that! Do not do any blind removal
+
+        # @TODO How to handle '.gitignore' and '.git/'?
+
         # Else do blind removal of *.py, config.json, makefile, .gitignore, ./.git/, ./src/, ./obj/, ./bin/, {Executable}, etc.
         # else:
         #     os.remove(glob(directory + '/*.py'))
@@ -684,8 +710,6 @@ def main():
         print('\n>>> Configuring the project >>>')
         rocket.Config()
         print('<<< Configured \'' + rocket.configuration.project + '\' <<<')
-
-        rocket.Print()
 
     else:
         raise Exception('Must specify language with \'-l LANGUAGE\' or run config with \'-c\' or \'--config\'')
