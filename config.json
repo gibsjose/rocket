@@ -3,6 +3,10 @@
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
+    "git": true,
+    "github create": false,
+    "github remote": "git@github.com:user/Rocket.git",
+    "github user": "user",
     "language": "Python",
     "license": "MIT",
     "project": "Rocket",

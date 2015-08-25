@@ -11,11 +11,13 @@
 
 # Essentials
 from enum import Enum
+from glob import glob
 import sys, os, traceback, optparse
 import re
 import operator
 import time
 import datetime
+import fileinput
 
 # JSON and Pretty Print
 import json
@@ -23,6 +25,9 @@ from pprint import pprint
 
 # File Copying, `which()`, etc.
 import shutil
+
+# Call shell commands for `git`
+from subprocess import call
 
 class Language(Enum):
     """
@@ -102,10 +107,13 @@ class Configuration:
             # Load JSON data
             self.data = json.loads(config_file.read())
 
-            # Set language (string)
-            self.language_string = self.data["language"]
+            # Language (string)
+            if 'language' not in self.data:
+                raise Exception('Must specify \'language\' in config file')
 
-            # Set language (enum)
+            self.language_string = self.data['language']
+
+            # Language (enum)
             lang = self.language_string.lower()
             if lang in LanguageDictionary:
                 self.language = LanguageDictionary[lang]
@@ -113,10 +121,76 @@ class Configuration:
                 self.language = Language.unknown
                 raise Exception('Unknown language')
 
-            # Set project name
-            self.project = self.data["project"]
+            # Project name
+            if 'project' not in self.data:
+                raise Exception('Must specify \'project\' in config file')
+            self.project = self.data['project']
 
-            # @TODO author(s), website(s), git, etc...
+            # Authors
+            if 'authors' not in self.data:
+                raise Exception('Must specify at least one author under \'authors\' in config file')
+            self.authors = self.data['authors']
+
+            for author in self.authors:
+                if 'name' not in author:
+                    raise Exception('Authors must have \'name\' attribute')
+
+            # Websites
+            if 'websites' in self.data:
+                self.websites = self.data['websites']
+            else:
+                self.website = []
+
+            # License
+            if 'license' in self.data:
+                self.license = self.data['license']
+            else:
+                self.license = 'None'
+
+            # Git
+            if 'git' in self.data:
+                self.git = self.data['git']
+            else:
+                self.git = False
+
+            # GitHub
+            if 'github create' in self.data:
+                self.github_create = self.data['github create']
+            else:
+                self.github_create = False
+
+            if 'github remote' in self.data:
+                self.github_remote = self.data['github remote']
+            else:
+                self.github_remote = 'None'
+
+            if 'github user' in self.data:
+                self.github_user = self.data['github user']
+            else:
+                self.github_user = 'None'
+
+    def Print(self):
+        print('Project: ' + self.project)
+        print('Language: ' + self.language_string)
+        print('Date: ' + self.date)
+        print('License: ' + self.license)
+        print('Author(s):')
+        for author in self.authors:
+            print('\t' + author['name'], end='')
+            if 'email' in author:
+                print(': ' + author['email'])
+            else:
+                print('')
+        print('Website(s):')
+        if len(self.websites) == 0:
+            print('\t None')
+        else:
+            for website in self.websites:
+                print('\t' + website)
+        print('Git: ' + str(self.git))
+        print('Create GitHub Repo: ' + str(self.github_create))
+        print('GitHub Remote: ' + self.github_remote)
+        print('GitHub User: ' + self.github_user)
 
 class Rocket:
     """
@@ -168,8 +242,9 @@ class Rocket:
         # Make directories and copy files as needed for specific languages
         if (self.language == Language.c) or (self.language == Language.cpp) or (self.language == Language.avr_c) or (self.language == Language.avr_cpp):
             # Create necessary directories
-            os.makedirs(directory + '/src/')
-            print('\t> Created source directory \'./src/\'')
+            if not os.path.exists(directory + '/src/'):
+                os.makedirs(directory + '/src/')
+                print('\t> Created source directory \'./src/\'')
 
             # Copy the skeleton code
             if (self.language == Language.c) or (self.language == Language.avr_c):
@@ -196,6 +271,11 @@ class Rocket:
         # Decode the configuration object
         self.configuration.Decode(os.getcwd() + '/config.json')
 
+        if self.configuration.language_string in LanguageNameDictionary:
+            language_name = LanguageNameDictionary[self.configuration.language_string]
+        else:
+            language_name = 'unknown'
+
         print('\t> Generated date: ' + self.configuration.date)
         print('\t> Detected language: ' + self.configuration.language_string)
         print('\t> Detected project name: ' + self.configuration.project)
@@ -204,41 +284,111 @@ class Rocket:
         rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
         directory = os.getcwd()
 
+        # Rename skeleton code files to project name
+
+        # Modify skeleton code
+        if self.configuration.language == Language.c:
+            # @TODO Look here instead of using `fileinput`: https://stackoverflow.com/questions/10818812/python-writing-to-file-using-stdout-and-fileinput
+            # for line in fileinput.input(directory + '/src/rocket.c', inplace=True):
+            #     # {TITLE}
+            #     print(line.replace('\{TITLE\}', self.configuration.project), end='')
+            #
+            #     # {AUTHORS}
+            #     first_author = self.configuration.authors[0]
+            #     auth = first_author['name'];
+            #     if 'email' in first_author:
+            #         auth += ' (' + first_author['email'] + ')'
+            #
+            #     if len(self.configuration.authors) > 1:
+            #         auth_iter = iter(self.configuration.authors)
+            #         next(auth_iter)
+            #         for author in auth_iter:
+            #             auth += '\n*\t' + author['name']
+            #             if 'email' in author:
+            #                 auth += ' (' + author['email'] + ')'
+            #
+            #     print(line.replace('\{AUTHORS\}', auth), end='')
+            #
+            #     # {DD MONTH YYYY}
+            #     print(line.replace('\{DD MONTH YYYY\}', self.configuration.date), end='')
+            #
+            #     # {WEBSITES}
+            #     if len(self.configurations.websites) > 0:
+            #         webs = self.configuration.websites[0]
+            #         webs_iter = iter(self.configuration.websites)
+            #         next(webs_iter)
+            #         for website in webs_iter:
+            #             webs += '\n*\t' + website
+            #
+            #     print(line.replace('\{WEBSITES\}', webs), end='')
+
+            print('\t> Updated ./src/rocket.c')
+
         # If project will be a `git` repo add `.gitignore` and `README.md`
-        # if self.configuration.git:
-        #     # @TODO Create blank `README.md` file
-        #     with open(directory + '/README.md', 'w') as readme:
-        #         readme.write('# ' + self.configuration.project + '\n')
-        #
-        #     # @TODO Only do this if they specify to create a Git repo
-        #     Copy the `.gitignore`
-        #     shutil.copy(rocket_directory + '/languages/' + lang + '/' + lang + '.gitignore', directory + '/.gitignore')
-        #     print('\tCreated ' + language + ' \'./.gitignore\'')
+        if self.configuration.git:
+            # Create README
+            with open(directory + '/README.md', 'w') as readme:
+                readme.write('# ' + self.configuration.project + '\n')
+                readme.write(self.configuration.date + '\n')
+
+            # Copy the `.gitignore`
+            shutil.copy(rocket_directory + '/languages/' + language_name + '/' + language_name + '.gitignore', directory + '/.gitignore')
+            print('\tCreated ' + self.configuration.language_string + ' \'./.gitignore\'')
+
+            # Run `git init`
+            call("git init", shell=True)
+
+        # # @TODO
+        # # If project includes a GitHub account, either add or create remote
+        # if self.configuration.github_create:
+        #     # Create GitHub account using `hub`, if installed
 
     def Clear(self):
         """
         Remove generated project files in the current directory
         """
-        # @TODO How to remove safely???
+        rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        directory = os.getcwd()
+
+        # Make sure user knows exactly which directory they are in
+        response = input('Remove all project files in \'' + directory + '\'? [Y/n]: ')
+        if not response == 'Y':
+            return 1
+
+        # Have at least *some* sanity check...
+        if directory == rocket_directory:
+            raise Exception('Removing here would remove Rocket\'s files...')
+        elif directory == '/':
+            raise Exception('You do not really want to remove \'' + directory + '\', right...?')
+        elif directory == '/usr':
+            raise Exception('You do not really want to remove \'' + directory + '\', right...?')
+        elif directory == os.path.expanduser('~'):
+            raise Exception('You do not really want to remove \'' + directory + '\', right...?')
+
+        # Can use the `config.json` to more intelligently remove files if it exists
+        if os.path.exists(directory + '/config.json'):
+            configuration = Configuration()
+            configuration.Decode(directory + '/config.json')
+            configuration.Print()
+
+        # Else do blind removal of *.py, config.json, makefile, .gitignore, ./.git/, ./src/, ./obj/, ./bin/, {Executable}, etc.
+        # else:
+        #     os.remove(glob(directory + '/*.py'))
+        #     os.remove(directory + '/config.json')
+        #     os.remove(directory + '/makefile')
+        #     os.remove(directory + '/.gitignore')
+        #     shutil.rmtree(directory + '/.git/')
+        #     shutil.rmtree(directory + '/src/')
+        #     shutil.rmtree(directory + '/obj/')
+        #     shutil.rmtree(directory + '/bin/')
+
+        return 0
 
     def Print(self):
         """
         Prints the configuration data in a nice format
         """
-        print('Project: ' + self.configuration.project)
-
-        print('Date: ' + self.configuration.date)
-
-        print('Language: ' + self.configuration.language_string)
-
-        # @TODO
-        # for author in self.data["authors"]:
-        #     print('Author: ' + author["name"] + ' Email: ' + author["email"])
-        #
-        # for website in self.data["websites"]:
-        #     print('Website: ' + website)
-        #
-        # print('License: ' + self.data["license"])
+        self.configuration.Print()
 
 def main():
     """
@@ -261,22 +411,25 @@ def main():
 
     if options.remove:
         directory = os.getcwd()
-        print('\n== Removing existing project files ==')
-        rocket.Clear()
-        print('== Project files removed ==')
+        print('\n>>> Removing existing project files >>>')
+        rocket = Rocket()
+        if not rocket.Clear():
+            print('<<< Project files removed <<<')
 
     elif options.language:
         rocket = Rocket()
-        print('\n== Generating a blank ' + options.language + ' project ==')
+        print('\n>>> Generating a blank ' + options.language + ' project >>>')
         rocket.Generate(options.language)
-        print('== Generated skeleton ' + options.language + ' project ==')
-        print('== Edit the \'./config.json\' file with your project settings and then run \'Rocket -c\' to finish ==')
+        print('<<< Generated skeleton ' + options.language + ' project <<<')
+        print('<<< Edit the \'./config.json\' file with your project settings and run \'Rocket -c\' to finish <<<')
 
     elif options.config:
         rocket = Rocket()
-        print('\n== Configuring the project ==')
+        print('\n>>> Configuring the project >>>')
         rocket.Config()
-        print('== Configured \'' + rocket.configuration.project + '\' ==')
+        print('<<< Configured \'' + rocket.configuration.project + '\' <<<')
+
+        rocket.Print()
 
     else:
         raise Exception('Must specify language with \'-l LANGUAGE\' or run config with \'-c\' or \'--config\'')
@@ -306,8 +459,8 @@ if __name__ == '__main__':
     except SystemExit as e: # sys.exit()
         raise e
     except Exception as e:
-        print('\n!== Exception: ', end='')
-        print(str(e), end=' ==!\n\n')
+        print('\n<-- Exception: ', end='')
+        print(str(e), end=' -->\n\n')
         if(options.verbose):
             traceback.print_exc()
 
