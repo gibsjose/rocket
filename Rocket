@@ -97,7 +97,6 @@ class Configuration:
 
             # Set language (enum)
             lang = self.language_string.lower()
-            print('\tDetected language: ' + self.language_string)
             if lang in LanguageDictionary:
                 self.language = LanguageDictionary[lang]
             else:
@@ -107,7 +106,7 @@ class Configuration:
             # Set project name
             self.project = self.data["project"]
 
-            # @TODO author(s), website(s), etc...
+            # @TODO author(s), website(s), git, etc...
 
 class Rocket:
     """
@@ -138,41 +137,37 @@ class Rocket:
         # if not rocket_directory:
         #     raise Exception('Rocket executable path could not be found: Check your installation!')
         rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
-        print('\tCopying from Rocket directory: ' + rocket_directory)
+        print('\t> Copying from Rocket directory: ' + rocket_directory)
 
         # Pull correct files and copy them to local directory
-        self.directory = os.getcwd()
-        print('\tCurrent directory: ' + self.directory)
+        directory = os.getcwd()
+        print('\t> Current directory: ' + directory)
 
         # Write a default `config.json` file with the correct language
         # Read in the default file, change the language attribute, and write it
         self.configuration = Configuration()
-        self.configuration.Modify(rocket_directory + '/config.json', self.directory + '/config.json', language)
-        print('\tCreated default ' + language + 'configuration file \'./config.json\'')
-
-        # @TODO Should this be done in 'Config()' ???
-        # Create blank `README.md` file
-        # with open(self.directory + '/README.md', 'w') as readme:
-        #     readme.write('# Rocket\n')
+        self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language)
+        print('\t> Created default ' + language + 'configuration file \'./config.json\'')
 
         # Make directories and copy files as needed for specific languages
-        if self.language == Language.c:
+        if (self.language == Language.c) or (self.language == Language.cpp) or (self.language == Language.avr_c) or (self.language == Language.avr_cpp):
             # Create necessary directories
-            os.makedirs(self.directory + '/src/')
-            print('\tCreated source directory \'./src/\'')
+            os.makedirs(directory + '/src/')
+            print('\t> Created source directory \'./src/\'')
 
             # Copy the skeleton code
-            shutil.copy(rocket_directory + '/languages/c/skeleton/rocket.c', self.directory + '/src/')
-            shutil.copy(rocket_directory + '/languages/c/skeleton/rocket.h', self.directory + '/src/')
-            print('\tCreated skeleton \'.c\' and \'.h\' files in \'./src/\'')
+            if (self.language == Language.c) or (self.language == Language.avr_c):
+                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.c', directory + '/src/')
+                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.h', directory + '/src/')
+                print('\t> Created skeleton \'.c\' and \'.h\' files in \'./src/\'')
+            else:
+                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.cpp', directory + '/src/')
+                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.h', directory + '/src/')
+                print('\t> Created skeleton \'.cpp\' and \'.h\' files in \'./src/\'')
 
             # Copy the makefile
-            shutil.copy(rocket_directory + '/languages/c/makefile', self.directory)
-
-            # @TODO Only do this if they specify to create a Git repo
-            # Copy the `.gitignore`
-            shutil.copy(rocket_directory + '/languages/c/c.gitignore', self.directory + '/.gitignore')
-            print('\tCreated C language \'.gitignore\'')
+            shutil.copy(rocket_directory + '/languages/' + lang + '/makefile', directory)
+            print('\t> Created ' + language + ' \'./makefile\'')
 
     def Config(self):
         """
@@ -185,8 +180,30 @@ class Rocket:
         # Decode the configuration object
         self.configuration.Decode(os.getcwd() + '/config.json')
 
+        print('\t> Generated date: ' + self.configuration.date)
+        print('\t> Detected language: ' + self.configuration.language_string)
+        print('\t> Detected project name: ' + self.configuration.project)
+
         # Modify skeleton files/makefiles with data from `config.json`
-        self.directory = os.getcwd()
+        rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        directory = os.getcwd()
+
+        # If project will be a `git` repo add `.gitignore` and `README.md`
+        # if self.configuration.git:
+        #     # @TODO Create blank `README.md` file
+        #     with open(directory + '/README.md', 'w') as readme:
+        #         readme.write('# ' + self.configuration.project + '\n')
+        #
+        #     # @TODO Only do this if they specify to create a Git repo
+        #     Copy the `.gitignore`
+        #     shutil.copy(rocket_directory + '/languages/' + lang + '/' + lang + '.gitignore', directory + '/.gitignore')
+        #     print('\tCreated ' + language + ' \'./.gitignore\'')
+
+    def Clear(self):
+        """
+        Remove generated project files in the current directory
+        """
+        # @TODO How to remove safely???
 
     def Print(self):
         """
@@ -226,18 +243,24 @@ def main():
         if options.config:
             print('\tConfiguring with \'config.json\'')
 
-    if options.language:
+    if options.remove:
+        directory = os.getcwd()
+        print('\n== Removing existing project files ==')
+        rocket.Clear()
+        print('== Project files removed ==')
+
+    elif options.language:
         rocket = Rocket()
         print('\n== Generating a blank ' + options.language + ' project ==')
         rocket.Generate(options.language)
-        print('== Successfully generated skeleton ' + options.language + ' project ==')
-        print('== Edit the \'./config.json\' file with your project settings and then run \'Rocket -c\' to finish==')
+        print('== Generated skeleton ' + options.language + ' project ==')
+        print('== Edit the \'./config.json\' file with your project settings and then run \'Rocket -c\' to finish ==')
 
     elif options.config:
         rocket = Rocket()
         print('\n== Configuring the project ==')
         rocket.Config()
-        print('== Successfully configured \'' + rocket.configuration.name + '\' ==')
+        print('== Configured \'' + rocket.configuration.project + '\' ==')
 
     else:
         raise Exception('Must specify language with \'-l LANGUAGE\' or run config with \'-c\' or \'--config\'')
@@ -247,9 +270,11 @@ if __name__ == '__main__':
         start_time = time.time()
         parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='0.1.0')
 
+        parser.add_option('-l', '--language', action='store', type='string', dest='language', help='language')
+
         parser.add_option('-c', '--config', action='store_true', default=False, help='Configure project using config.json file')
 
-        parser.add_option('-l', '--language', action='store', type='string', dest='language', help='language')
+        parser.add_option('-r', '--remove', action='store_true', default=False, help='Remove all project files if they exist')
 
         parser.add_option('-v', '--verbose', action='store_true', default=False, help='verbose mode')
 
