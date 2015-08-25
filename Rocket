@@ -62,17 +62,71 @@ LanguageNameDictionary = {
     'python': 'python'
 }
 
+class LanguageConfiguration:
+    """
+    Language Configuration from a `language.json` file
+    """
+    def __init__(self):
+        """
+        Default constructor
+        """
+        self.data = {}
+        self.exists = False
+        self.naming = None
+        self.sources = []
+        self.extension = True
+
+    def Decode(self, filepath):
+        """
+        Try to read in and parse language config file
+        """
+        if os.path.exists(filepath):
+            self.exists = True
+
+            # Read language JSON data
+            with open(filepath, encoding='utf-8') as lang_file:
+                # Load JSON data
+                self.data = json.loads(lang_file.read())
+
+                # Naming
+                if 'naming' in self.data:
+                    self.naming = self.data['naming'].replace(' ', '-').lower()
+                else:
+                    self.naming = None
+
+                # Sources
+                if 'sources' in self.data:
+                    self.sources = self.data['sources']
+                else:
+                    self.sources = []
+
+                # extension
+                if 'extension' in self.data:
+                    self.extension = self.data['extension']
+                else:
+                    self.extension = True
+
+        else:
+            self.exists = False
+            self.naming = None
+            self.sources = []
+            self.extension = True
+
 class Configuration:
     def __init__(self):
         """
-        Defines the Rocket Configuration object
+        Default constructor
         """
-        self.data = []
+        self.data = {}
 
     def Modify(self, in_file, out_file, language_string):
         """
         Read in the JSON `in_file`, modify the language attribute, and write it out as the JSON `out_file`
         """
+        # Check if config file exists
+        if not os.path.exists(in_file):
+            raise Exception('Configuration file does not exist at ' + in_file)
+
         with open(in_file, encoding='utf-8') as in_fp:
             # Load JSON data
             self.data = json.loads(in_fp.read())
@@ -99,9 +153,10 @@ class Configuration:
         today = datetime.date.today()
         self.date = today.strftime('%d %b %Y')
 
-        # @TODO Issue exception if file does not exist
+        # Check if config file exists
+        if not os.path.exists(filepath):
+            raise Exception('Configuration file does not exist at ' + filepath)
 
-        # @TODO Raise exceptions or default (with message) if required JSON objects do not exist
         # Read config JSON data
         with open(filepath, encoding='utf-8') as config_file:
             # Load JSON data
@@ -120,6 +175,9 @@ class Configuration:
             else:
                 self.language = Language.unknown
                 raise Exception('Unknown language')
+
+            # Language (official name)
+            self.language_name = LanguageNameDictionary[self.language_string]
 
             # Project name
             if 'project' not in self.data:
@@ -191,6 +249,233 @@ class Configuration:
         print('Create GitHub Repo: ' + str(self.github_create))
         print('GitHub Remote: ' + self.github_remote)
         print('GitHub User: ' + self.github_user)
+
+class CommentFiller:
+    """
+    Replaces comment blocks in files with the appropriate data
+    """
+    def __init__(self, configuration):
+        """
+        Sets configuration values
+        """
+        self.configuration = configuration
+
+    def Replace(self, files):
+        """
+        Intelligently replace comments in files based on language type
+        """
+        for f in files:
+            self.ReplaceInFile(f)
+
+    def ReplaceInFile(self, filepath):
+        """
+        Replace the comment tags with actual data in a source file
+        """
+        if not os.path.exists(filepath):
+            raise Exception('Cannot modify \'' + filepath + '\': Does not exist')
+
+        with open(filepath, 'r+') as f:
+            old = f.readlines() # Pull the file contents to a list
+            f.seek(0) # Jump to start, so we overwrite instead of appending
+            for line in old:
+                # {TITLE}
+                f.write(line.replace('\{TITLE\}', self.configuration.project), end='')
+
+                # {AUTHORS}
+                first_author = self.configuration.authors[0]
+                auth = first_author['name'];
+                if 'email' in first_author:
+                    auth += ' (' + first_author['email'] + ')'
+
+                if len(self.configuration.authors) > 1:
+                    auth_iter = iter(self.configuration.authors)
+                    next(auth_iter)
+                    for author in auth_iter:
+                        auth += '\n*\t' + author['name']
+                        if 'email' in author:
+                            auth += ' (' + author['email'] + ')'
+
+                f.write(line.replace('\{AUTHORS\}', auth), end='')
+
+                # {DD MONTH YYYY}
+                f.write(line.replace('\{DD MONTH YYYY\}', self.configuration.date), end='')
+
+                # {WEBSITES}
+                if len(self.configurations.websites) > 0:
+                    webs = self.configuration.websites[0]
+                    webs_iter = iter(self.configuration.websites)
+                    next(webs_iter)
+                    for website in webs_iter:
+                        webs += '\n*\t' + website
+
+                f.write(line.replace('\{WEBSITES\}', webs), end='')
+
+        print('\t> Updated ' + filepath)
+
+class MakefileFiller:
+    """
+    Replaces items in makefiles with appropriate data
+    """
+    def __init__(self, configuration):
+        """
+        Sets configuration values
+        """
+        self.configuration = configuration
+
+    def Replace(self, filepath):
+        """
+        Replace the makefile variables with actual data
+        """
+        if self.configuration.language == Language.python:
+            return
+
+class FileNamer:
+    """
+    Renames files with appropriate name
+    """
+    def __init__(self, configuration):
+        """
+        Sets configuration values and parses language config, if it exists
+        """
+        self.configuration = configuration
+
+        self.rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        language_file = self.rocket_directory + '/languages/' + self.configuration.language_name + '/language.json'
+
+        self.language_configuration = LanguageConfiguration()
+        self.language_configuration.Decode(language_file)
+
+    def SpacesToUnderscores(self, word):
+        """
+        Converts spaces to lowercase underscores: 'Rocket Project' -> 'rocket_project'
+        """
+        return word.replace(' ', '_').lower()
+
+    def SpacesToDashes(self, word):
+        """
+        Converts spaces to lowercase dashes: 'Rocket Project' -> 'rocket-project'
+        """
+        return word.replace(' ', '-').lower()
+
+    def UnderscoresToCamelCase(self, word):
+        """
+        Converts lowercase underscores to CamelCase: 'rocket_project' -> 'RocketProject'
+        """
+        return ''.join(x.capitalize() or '_' for x in word.split('_'))
+
+    def SpacesToCamelCase(self, word):
+        """
+        Converts spaces to CamelCase: 'Rocket Project' -> 'RocketProject'
+        """
+        return self.UnderscoresToCamelCase(self.SpacesToUnderscores(word))
+
+    def GenerateName(self):
+        """
+        Generates a name for a file based on the project name and language type
+        """
+        # First try to pull from the $(ROCKET_DIR)/languages/*/language.json file
+        if self.language_configuration.exists:
+            # Naming options:
+            #   'dashes' or 'dash': 'Rocket Project' -> 'rocket-project'
+            #   'underscores' or 'underscore': 'Rocket Project' -> 'rocket_project'
+            #   'camel-case' or 'camelcase' or 'camel_case': 'Rocket Project' -> 'RocketProject'
+            naming = self.language_configuration.naming
+            print('\t> Using naming: ' + naming)
+
+            if naming == 'dashes' or naming == 'dash':
+                self.name = self.SpacesToDashes(self.configuration.project)
+                return
+
+            elif naming == 'underscores' or naming == 'underscore':
+                self.name = self.SpacesToUnderscores(self.congifuration.project)
+                return
+
+            elif naming == 'camel-case' or naming == 'camelcase' or naming == 'camel_case':
+                self.name = self.SpacesToCamelCase(self.configuration.project)
+                return
+
+            # If 'naming' attribute unrecognized, just break and use defaults below
+            else:
+                None;
+
+        # Otherwise use defaults
+        language = self.configuration.language
+
+        # 'Rocket Project' -> 'rocket-project' for C
+        if language == Language.c or language == Language.avr_c:
+            self.name =  self.SpacesToDashes(self.configuration.project)
+            print('\t> Defaulting to \'dashes\' naming for ' + self.configuration.language_string + ' projects')
+
+        # 'Rocket Project' -> 'RocketProject' for C++
+        elif language == Language.cpp or language == Language.avr_cpp:
+            self.name = self.SpacesToCamelCase(self.configuration.project)
+            print('\t> Defaulting to \'camel-case\' naming for ' + self.configuration.language_string + ' projects')
+
+        # 'Rocket Project' -> 'rocket_project' for Python
+        elif language == Language.python:
+            self.name =  self.SpacesToUnderscores(self.configuration.project)
+            print('\t> Defaulting to \'underscores\' naming for ' + self.configuration.language_string + ' projects')
+
+        # 'Rocket Project' -> 'rocket_project' for all else
+        else:
+            self.name = self.SpacesToUnderscores(self.configuration.project)
+            print('\t> Defaulting to \'underscores\' naming for ' + self.configuration.language_string + ' projects')
+
+        return
+
+    def Rename(self):
+        """
+        Rename the files according to the project name
+        """
+        # Generate a name
+        self.GenerateName()
+        print('\t> Name generated: ' + self.name)
+
+        # Create file list
+        self.files = []
+        language = self.configuration.language
+        sources = self.language_configuration.sources
+
+        directory = os.getcwd()
+
+        if language == Language.python:
+            src_directory = directory
+        else:
+            src_directory = directory + '/src/'
+
+        for f in os.listdir(src_directory):
+            for s in sources:
+                if f.endswith(s):
+                    self.files.append(src_directory + f)
+
+        print('\t> Renaming the following files:')
+        for f in self.files:
+            print('\t\t* ' + f)
+
+        # Rename all files
+        self.renamed = []
+        for f in self.files:
+            self.renamed.append(self.RenameFile(f))
+
+        print('\t> Renamed files to:')
+        for f in self.renamed:
+            print('\t\t* ' + f)
+
+        return self.renamed
+
+    def RenameFile(self, filepath):
+        """
+        Rename an individual file according to the project name
+        """
+        new_name = filepath.replace('rocket', self.name)
+
+        if not self.language_configuration.extension:
+            for s in self.language_configuration.sources:
+                new_name.replace(s, '')
+
+        os.rename(filepath, new_name)
+
+        return new_name
 
 class Rocket:
     """
@@ -285,44 +570,15 @@ class Rocket:
         directory = os.getcwd()
 
         # Rename skeleton code files to project name
+        file_namer = FileNamer(self.configuration)
+        files = file_namer.Rename()
 
-        # Modify skeleton code
-        if self.configuration.language == Language.c:
-            # @TODO Look here instead of using `fileinput`: https://stackoverflow.com/questions/10818812/python-writing-to-file-using-stdout-and-fileinput
-            # for line in fileinput.input(directory + '/src/rocket.c', inplace=True):
-            #     # {TITLE}
-            #     print(line.replace('\{TITLE\}', self.configuration.project), end='')
-            #
-            #     # {AUTHORS}
-            #     first_author = self.configuration.authors[0]
-            #     auth = first_author['name'];
-            #     if 'email' in first_author:
-            #         auth += ' (' + first_author['email'] + ')'
-            #
-            #     if len(self.configuration.authors) > 1:
-            #         auth_iter = iter(self.configuration.authors)
-            #         next(auth_iter)
-            #         for author in auth_iter:
-            #             auth += '\n*\t' + author['name']
-            #             if 'email' in author:
-            #                 auth += ' (' + author['email'] + ')'
-            #
-            #     print(line.replace('\{AUTHORS\}', auth), end='')
-            #
-            #     # {DD MONTH YYYY}
-            #     print(line.replace('\{DD MONTH YYYY\}', self.configuration.date), end='')
-            #
-            #     # {WEBSITES}
-            #     if len(self.configurations.websites) > 0:
-            #         webs = self.configuration.websites[0]
-            #         webs_iter = iter(self.configuration.websites)
-            #         next(webs_iter)
-            #         for website in webs_iter:
-            #             webs += '\n*\t' + website
-            #
-            #     print(line.replace('\{WEBSITES\}', webs), end='')
+        # Modify skeleton code (and makefile if necessary)
+        comment_filler = CommentFiller(self.configuration)
+        comment_filler.Replace(files)
 
-            print('\t> Updated ./src/rocket.c')
+        makefile_filler = MakefileFiller(self.configuration)
+        makefile_filler.Replace(directory + '/makefile')
 
         # If project will be a `git` repo add `.gitignore` and `README.md`
         if self.configuration.git:
