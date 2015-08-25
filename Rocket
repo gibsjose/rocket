@@ -9,6 +9,7 @@
 #   http://gibsjose.com
 #   http://github.com/gibsjose/Rocket
 
+# Essentials
 from enum import Enum
 import sys, os, traceback, optparse
 import re
@@ -16,15 +17,18 @@ import operator
 import time
 import datetime
 
-# JSON Ready and Pretty Print
+# JSON and Pretty Print
 import json
 from pprint import pprint
+
+# File Copying, `which()`, etc.
+import shutil
 
 class Language(Enum):
     """
     Defines the available languages as enumerated types
     """
-    unkown = 0
+    unknown = 0
     c = 1
     cpp = 2
     avr_c = 3
@@ -42,6 +46,69 @@ LanguageDictionary = {
     'python': Language.python
 }
 
+# @TODO Do I need this class?
+class Configuration:
+    def __init__(self):
+        """
+        Defines the Rocket Configuration object
+        """
+        self.data = []
+
+    def Modify(self, in_file, out_file, language_string):
+        """
+        Read in the JSON `in_file`, modify the language attribute, and write it out as the JSON `out_file`
+        """
+        with open(in_file, encoding='utf-8') as in_fp:
+            # Load JSON data
+            self.data = json.loads(in_fp.read())
+
+            # Modify language string
+            self.data["language"] = language_string
+
+        with open(out_file, 'w', encoding='utf-8') as out_fp:
+            # Write JSON data
+            json.dump(self.data, out_fp, sort_keys=True, indent=4)
+
+    def Encode(self, filepath):
+        """
+        Encode the configuration data as a JSON file
+        """
+        with open(filepath, 'w', encoding='utf-8') as config_file:
+            json.dump(self.data, config_file, sort_keys=True, indent=4)
+
+    def Decode(self, filepath):
+        """
+        Decode the configuration file as a Python JSON object (dictionary)
+        """
+        # Get current date in `DD MONTH YYYY` format
+        today = datetime.date.today()
+        self.date = today.strftime('%d %b %Y')
+
+        # @TODO Issue exception if file does not exist
+
+        # @TODO Raise exceptions or default (with message) if required JSON objects do not exist
+        # Read config JSON data
+        with open(filepath, encoding='utf-8') as config_file:
+            # Load JSON data
+            self.data = json.loads(config_file.read())
+
+            # Set language (string)
+            self.language_string = self.data["language"]
+
+            # Set language (enum)
+            lang = self.language_string.lower()
+            print('\tDetected language: ' + self.language_string)
+            if lang in LanguageDictionary:
+                self.language = LanguageDictionary[lang]
+            else:
+                self.language = Language.unknown
+                raise Exception('Unknown language')
+
+            # Set project name
+            self.project = self.data["project"]
+
+            # @TODO author(s), website(s), etc...
+
 class Rocket:
     """
     Defines the Rocket object for creating project/code templates
@@ -55,7 +122,7 @@ class Rocket:
     def Generate(self, language):
         """
         Generates the skeleton code, makefiles (if necessary), gitignore
-        files, etc. and generates a default `config.json` object
+        files, etc. and generates a default `config.json` object with the correct language
         """
         # Set language
         lang = language.lower()
@@ -65,34 +132,58 @@ class Rocket:
             self.language = Language.unknown
             raise Exception('Unknown language')
 
+        # @TODO Decide on using 'which()' method or the 'os.path.dirname()' method
+        # Get the Rocket executable directory, which contains the templates
+        # rocket_directory = shutil.which('Rocket')
+        # if not rocket_directory:
+        #     raise Exception('Rocket executable path could not be found: Check your installation!')
+        rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
+        print('\tCopying from Rocket directory: ' + rocket_directory)
+
         # Pull correct files and copy them to local directory
         self.directory = os.getcwd()
+        print('\tCurrent directory: ' + self.directory)
 
-        # Create default `config.json` object
+        # Write a default `config.json` file with the correct language
+        # Read in the default file, change the language attribute, and write it
+        self.configuration = Configuration()
+        self.configuration.Modify(rocket_directory + '/config.json', self.directory + '/config.json', language)
+        print('\tCreated default ' + language + 'configuration file \'./config.json\'')
+
+        # @TODO Should this be done in 'Config()' ???
+        # Create blank `README.md` file
+        # with open(self.directory + '/README.md', 'w') as readme:
+        #     readme.write('# Rocket\n')
+
+        # Make directories and copy files as needed for specific languages
+        if self.language == Language.c:
+            # Create necessary directories
+            os.makedirs(self.directory + '/src/')
+            print('\tCreated source directory \'./src/\'')
+
+            # Copy the skeleton code
+            shutil.copy(rocket_directory + '/languages/c/skeleton/rocket.c', self.directory + '/src/')
+            shutil.copy(rocket_directory + '/languages/c/skeleton/rocket.h', self.directory + '/src/')
+            print('\tCreated skeleton \'.c\' and \'.h\' files in \'./src/\'')
+
+            # Copy the makefile
+            shutil.copy(rocket_directory + '/languages/c/makefile', self.directory)
+
+            # @TODO Only do this if they specify to create a Git repo
+            # Copy the `.gitignore`
+            shutil.copy(rocket_directory + '/languages/c/c.gitignore', self.directory + '/.gitignore')
+            print('\tCreated C language \'.gitignore\'')
 
     def Config(self):
         """
         Pull from the generated and (maybe) edited `config.json` file, and
         make changes to comment header blocks
         """
-        # Get current date in `DD MONTH YYYY` format
-        today = datetime.date.today()
-        self.date = today.strftime('%d %b %Y')
+        # Create a configuration object
+        self.configuration = Configuration()
 
-        # @TODO Issue exception if `config.json` does not exist
-
-        # Read config JSON data
-        with open('config.json', encoding='utf-8') as config_file:
-            # Load JSON data
-            self.data = json.loads(config_file.read())
-
-            # Set language
-            lang = self.data["language"].lower()
-            if lang in LanguageDictionary:
-                self.language = LanguageDictionary[lang]
-            else:
-                self.language = Language.unknown
-                raise Exception('Unknown language')
+        # Decode the configuration object
+        self.configuration.Decode(os.getcwd() + '/config.json')
 
         # Modify skeleton files/makefiles with data from `config.json`
         self.directory = os.getcwd()
@@ -101,19 +192,20 @@ class Rocket:
         """
         Prints the configuration data in a nice format
         """
-        print('Project: ' + self.data["project"])
+        print('Project: ' + self.configuration.project)
 
-        print('Date: ' + self.date)
+        print('Date: ' + self.configuration.date)
 
-        print('Language: ' + self.data["language"])
+        print('Language: ' + self.configuration.language_string)
 
-        for author in self.data["authors"]:
-            print('Author: ' + author["name"] + ' Email: ' + author["email"])
-
-        for website in self.data["websites"]:
-            print('Website: ' + website)
-
-        print('License: ' + self.data["license"])
+        # @TODO
+        # for author in self.data["authors"]:
+        #     print('Author: ' + author["name"] + ' Email: ' + author["email"])
+        #
+        # for website in self.data["websites"]:
+        #     print('Website: ' + website)
+        #
+        # print('License: ' + self.data["license"])
 
 def main():
     """
@@ -136,11 +228,16 @@ def main():
 
     if options.language:
         rocket = Rocket()
+        print('\n== Generating a blank ' + options.language + ' project ==')
         rocket.Generate(options.language)
+        print('== Successfully generated skeleton ' + options.language + ' project ==')
+        print('== Edit the \'./config.json\' file with your project settings and then run \'Rocket -c\' to finish==')
 
     elif options.config:
         rocket = Rocket()
+        print('\n== Configuring the project ==')
         rocket.Config()
+        print('== Successfully configured \'' + rocket.configuration.name + '\' ==')
 
     else:
         raise Exception('Must specify language with \'-l LANGUAGE\' or run config with \'-c\' or \'--config\'')
@@ -158,9 +255,6 @@ if __name__ == '__main__':
 
         (options, args) = parser.parse_args()
 
-        # if not options.file:
-        #     parser.error('missing argument: -f FILE')
-
         main()
         if options.verbose: print('\n' + time.asctime())
         if options.verbose: print('Total Runtime: ', end='')
@@ -171,7 +265,9 @@ if __name__ == '__main__':
     except SystemExit as e: # sys.exit()
         raise e
     except Exception as e:
-        print('Error: Unexpected Exception')
-        print(str(e))
-        traceback.print_exc()
+        print('\n!== Exception: ', end='')
+        print(str(e), end=' ==!\n\n')
+        if(options.verbose):
+            traceback.print_exc()
+
         os._exit(1)
