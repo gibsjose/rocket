@@ -1,0 +1,8 @@
+{
+    "language": "cpp",
+    "naming": "camel-case",
+    "sources": [
+        ".cpp",
+        ".h"
+    ]
+}

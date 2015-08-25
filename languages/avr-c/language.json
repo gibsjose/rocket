@@ -1,0 +1,8 @@
+{
+    "language": "avr-c",
+    "naming": "dashes",
+    "sources": [
+        ".c",
+        ".h"
+    ]
+}

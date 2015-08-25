@@ -1,0 +1,8 @@
+{
+    "language": "c",
+    "naming": "dashes",
+    "sources": [
+        ".c",
+        ".h"
+    ]
+}

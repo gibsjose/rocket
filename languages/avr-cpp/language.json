@@ -1,0 +1,8 @@
+{
+    "language": "avr-cpp",
+    "naming": "camel-case",
+    "sources": [
+        ".cpp",
+        ".h"
+    ]
+}

@@ -1,0 +1,8 @@
+{
+    "language": "python",
+    "naming": "camel-case",
+    "sources": [
+        ".py"
+    ],
+    "extension": true
+}
