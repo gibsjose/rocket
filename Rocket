@@ -46,7 +46,17 @@ LanguageDictionary = {
     'python': Language.python
 }
 
-# @TODO Do I need this class?
+# Matches language names with their template directory name
+LanguageNameDictionary = {
+    'c': 'c',
+    'cpp': 'cpp',
+    'c++': 'cpp',
+    'avr-c': 'avr-c',
+    'avr-cpp': 'avr-cpp',
+    'avr-c++': 'avr-cpp',
+    'python': 'python'
+}
+
 class Configuration:
     def __init__(self):
         """
@@ -124,11 +134,17 @@ class Rocket:
         files, etc. and generates a default `config.json` object with the correct language
         """
         # Set language
+        # - 'language' is the user's raw input
+        # - 'lang' is a lowercase version of 'language'
+        # - 'self.language' is the actual language type enum (e.g. Language.cpp)
+        # - 'language_name' is the accepted language name by Rocket (e.g. 'C++' turn to 'cpp')
         lang = language.lower()
         if lang in LanguageDictionary:
             self.language = LanguageDictionary[lang]
+            language_name = LanguageNameDictionary[lang]
         else:
             self.language = Language.unknown
+            language_name = 'unknown'
             raise Exception('Unknown language')
 
         # @TODO Decide on using 'which()' method or the 'os.path.dirname()' method
@@ -146,7 +162,7 @@ class Rocket:
         # Write a default `config.json` file with the correct language
         # Read in the default file, change the language attribute, and write it
         self.configuration = Configuration()
-        self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language)
+        self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language_name)
         print('\t> Created default ' + language + 'configuration file \'./config.json\'')
 
         # Make directories and copy files as needed for specific languages
@@ -157,16 +173,16 @@ class Rocket:
 
             # Copy the skeleton code
             if (self.language == Language.c) or (self.language == Language.avr_c):
-                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.c', directory + '/src/')
-                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.h', directory + '/src/')
+                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.c', directory + '/src/')
+                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.h', directory + '/src/')
                 print('\t> Created skeleton \'.c\' and \'.h\' files in \'./src/\'')
             else:
-                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.cpp', directory + '/src/')
-                shutil.copy(rocket_directory + '/languages/' + lang + '/skeleton/rocket.h', directory + '/src/')
+                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.cpp', directory + '/src/')
+                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.h', directory + '/src/')
                 print('\t> Created skeleton \'.cpp\' and \'.h\' files in \'./src/\'')
 
             # Copy the makefile
-            shutil.copy(rocket_directory + '/languages/' + lang + '/makefile', directory)
+            shutil.copy(rocket_directory + '/languages/' + language_name + '/makefile', directory)
             print('\t> Created ' + language + ' \'./makefile\'')
 
     def Config(self):
