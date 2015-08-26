@@ -9,7 +9,7 @@
 **********************************************************/
 
 #include <stdio.h>
-#include "rocket.h"
+#include "{HEADER}"
 
 int main(int argc, char * argv[]) {
     printf("Rocket!\n");

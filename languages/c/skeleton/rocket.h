@@ -8,7 +8,7 @@
 *   {WEBSITES}
 **********************************************************/
 
-#ifndef ROCKET_H
-#define ROCKET_H
+#ifndef {GUARD}
+#define {GUARD}
 
-#endif//ROCKET_H
+#endif//{GUARD}

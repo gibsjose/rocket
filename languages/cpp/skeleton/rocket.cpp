@@ -9,7 +9,7 @@
 **********************************************************/
 
 #include <iostream>
-#include "rocket.h"
+#include "{HEADER}"
 
 int main(int argc, char * argv[]) {
     std::cout << "Rocket!" << std::endl;
