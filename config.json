@@ -3,12 +3,13 @@
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
-    "git": false,
-    "github create": false,
-    "github remote": "git@github.com:user/Rocket.git",
-    "github user": "user",
+    "git": true,
+    "github-create": false,
+    "github-remote": "git@github.com:user/example.git",
+    "github-user": "user",
     "language": "Python",
     "license": "MIT",
+    "license-url": "https://user.mit-license.org",
     "project": "Rocket",
     "websites": [
         "https://www.example.com",
