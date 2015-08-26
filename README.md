@@ -7,6 +7,7 @@ Configurable C, C++, and Python base project generator
 Creating and running a fully functional C++ project is as simple as:
 ```bash
 rocket create C++ "Awesome New Project"
+cd "Awesome New Project/"
 rocket config
 make
 ./AwesomeNewProject
