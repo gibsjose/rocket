@@ -800,8 +800,8 @@ if __name__ == '__main__':
         subparsers = parser.add_subparsers(help='commands:', dest='command')
 
         create_parser = subparsers.add_parser('create', help='create a new project')
-        create_parser.add_argument('language', type=str.lower, help='project language', choices=['c', 'c++', 'cpp', 'python'])
         create_parser.add_argument('project', help='project name')
+        create_parser.add_argument('language', type=str.lower, help='project language', choices=['c', 'c++', 'cpp', 'python'])
 
         config_parser = subparsers.add_parser('config', help='configure a project')
 

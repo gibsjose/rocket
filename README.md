@@ -6,7 +6,7 @@ Configurable C, C++, and Python base project generator
 
 Creating and running a fully functional C++ project is as simple as:
 ```bash
-rocket create C++ "Awesome New Project"
+rocket create "Awesome New Project" C++
 cd "Awesome New Project/"
 rocket config
 make
@@ -44,7 +44,7 @@ python setup.py install
 ## Usage
 The most basic usage is as follows:
 ```bash
-rocket create Python 'Clever Name'
+rocket create 'Clever Name' Python
 cd 'Clever Name'
 # Edit the generated 'config.json' file
 rocket config
