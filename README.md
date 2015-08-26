@@ -1,14 +1,27 @@
 # Rocket
-Configurable C, C++, and Python skeleton projects with configurable makefiles and git repository initialization.
+Configurable C, C++, and Python base project generator
 
 ## Description
-`Rocket` generates a new project folder with skeleton code (`.c` or `.cpp` and `.h` for C and C++ projects, and `.py` for Python) with auto-generated header comment blocks, and a simple `main`.
+`rocket` generates a new project folder with skeleton code with auto-generated header comment blocks, and a simple `main`. Creating and running a fully functional C++ project is as simple as:
 
-`Rocket` also generates and configures a generic makefile for C and C++ projects.
+```bash
+rocket C++ "Awesome New Project"
+rocket config
+make
+./AwesomeNewProject
+```
 
-Finally, `Rocket` can be configured to start a new `git` repository in the project directory, generate a `README.md`, use a language-specific `.gitignore`, and even create and push to a new GitHub remote repository.
-
-You can also specify your license type for open source projects, such as MIT, GNU GPL, Apache, etc.
+## Features
+* Generates directory structure and skeleton code
+* Generates robust makefiles for C and C++ projects
+* Automatically fills comment headers with project, author, date, etc.
+* Automatically names files based on language standards (CamelCase, underscore_names, dash-names, etc.)
+* Automatically configures a `makefile` for C and C++ projects
+* Can `init` a new `git` repository and create `README.md` and language-specific `.gitignore` files
+* Can create a GitHub repo and automatically push to it (requires [`hub`](https://github.com/github/hub) installed and configured)
+* Project settings configurable with local `config.json` file
+* Global language settings configurable with global `language.json` files
+* All code file templates are fully configurable
 
 ## Installation
 Clone with:
@@ -91,7 +104,7 @@ The following file shows all **possible** options:
 }
 ```
 
-The order of attributes does not matter, but `Rocket` will throw strange errors if you mess up the JSON syntax! `Rocket` will automatically order the attributes alphabetically when it generates a configuration file, but you are free to re-order it afterwards and it won't be touched unless you re-generate.
+The order of attributes does not matter, but `rocket` will throw strange errors if you mess up the JSON syntax! `rocket` will automatically order the attributes alphabetically when it generates a configuration file, but you are free to re-order it afterwards and it won't be touched unless you re-generate.
 
 ## Global Language Configuration
 Languages can be configured both by editing the skeleton templates in `skeleton/*` and by editing each language's `language.json` file.
@@ -128,16 +141,16 @@ If a naming convention cannot be found in the language configuration, the follow
 * C++: `camel-case`
 * Python: `underscores`
 
-For Python, `Rocket` will default to naming the main script, for example, `Rocket.py`, instead of just `Rocket`. If you would like to remove the `.py` extension, add the following attribute to the python `language.json`:
+For Python, `rocket` will default to naming the main script, for example, `Rocket.py`, instead of just `rocket`. If you would like to remove the `.py` extension, add the following attribute to the python `language.json`:
 ```json
     "extension": false
 ```
 
 ## Git
-`Rocket` can create a local (or remote, see below) `git` repository, complete with a language-specific `.gitignore` and a project-specific `README.md`
+`rocket` can create a local (or remote, see below) `git` repository, complete with a language-specific `.gitignore` and a project-specific `README.md`
 
 ## GitHub
-`Rocket` uses `hub create` to create the new GitHub repository. It then runs `git push --set-upstream origin master` to make the first push to the master branch of the remote repository.
+`rocket` uses `hub create` to create the new GitHub repository. It then runs `git push --set-upstream origin master` to make the first push to the master branch of the remote repository.
 
 ## Credits
 * Generic C and C++ Makefile: [@mbcrawfo](https://github.com/mbcrawfo/GenericMakefile)
