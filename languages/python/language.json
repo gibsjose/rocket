@@ -1,6 +1,6 @@
 {
     "language": "python",
-    "naming": "camel-case",
+    "naming": "underscores",
     "sources": [
         ".py"
     ],
