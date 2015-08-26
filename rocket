@@ -227,20 +227,15 @@ class Configuration:
                 self.git = False
 
             # GitHub
-            # if 'github-create' in self.data:
-            #     self.github_create = self.data['github-create']
-            # else:
-            #     self.github_create = False
-
-            if 'github-push' in self.data:
-                self.github_push = self.data['github-push']
+            if 'git-push' in self.data:
+                self.git_push = self.data['git-push']
             else:
-                self.github_push = None
+                self.git_push = None
 
-            if 'github-remote' in self.data:
-                self.github_remote = self.data['github-remote']
+            if 'git-remote' in self.data:
+                self.git_remote = self.data['git-remote']
             else:
-                self.github_remote = None
+                self.git_remote = None
 
     def Print(self):
         print('Project: ' + self.project)
@@ -261,9 +256,9 @@ class Configuration:
             for website in self.websites:
                 print('\t' + website)
         print('Git: ' + str(self.git))
-        print('Create GitHub Repo: ' + str(self.github_create))
-        print('GitHub Remote: ' + self.github_remote)
-        print('GitHub User: ' + self.github_user)
+        print('Create GitHub Repo: ' + str(self.git_create))
+        print('GitHub Remote: ' + self.git_remote)
+        print('GitHub User: ' + self.git_user)
 
 class CommentFiller:
     """
@@ -710,15 +705,15 @@ class Rocket:
             print('\t> ' + str(out), end='')
 
         # Set `origin` and set to push refs
-        if self.configuration.github_remote:
+        if self.configuration.git_remote:
             try:
-                out = subprocess.check_output('git remote add origin ' + self.configuration.github_remote, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+                out = subprocess.check_output('git remote add origin ' + self.configuration.git_remote, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
 
                 try:
                     out = subprocess.check_output('git config --get remote.origin.url', shell=True, universal_newlines=True)
                     print('\t> git remote origin: ' + str(out), end='')
 
-                    if self.configuration.github_push:
+                    if self.configuration.git_push:
                         try:
                             # Add files
                             subprocess.check_output('git add .', shell=True, universal_newlines=True)

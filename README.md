@@ -13,7 +13,7 @@ make
 ./AwesomeNewProject
 ```
 
-Hate the skeleton code I included? No problem – just modify the templates or drop your own files into the global `Rocket/languages/...` directory!
+Hate the skeleton code included? No problem – just modify the templates or drop your own files into the global `Rocket/languages/...` directory!
 
 Hate other template/style choices? Again, just edit the language config files ('language.js') or roll your own!
 
@@ -24,10 +24,19 @@ Hate other template/style choices? Again, just edit the language config files ('
 * Automatically names files based on language standards (CamelCase, underscore_names, dash-names, etc.)
 * Automatically configures a `makefile` for C and C++ projects
 * Can `init` a new `git` repository and create `README.md` and language-specific `.gitignore` files
-* Can create a GitHub repo and automatically push to it (requires [`hub`](https://github.com/github/hub) installed and configured)
+* Can automatically `add`, `commit`, and `push` to the remote repository
 * Project settings configurable with local `config.json` file
 * Global language settings configurable with global `language.json` files
 * All code file templates are fully configurable
+
+### Future Features
+* Support for AVR microcontroller projects in C and C++
+* Support for Arduino projects in C and C++ (with templates like Blinky, USART, etc.)
+* Support for both Python 3 and Python 2 (currently supports only Python 3)
+* Option to only generate makefile for an existing project (non-configurable)
+* Support for Travis-CI
+* License templates
+* ~~Can create a GitHub repo and automatically push to it (requires [`hub`](https://github.com/github/hub) installed and configured)~~ (Investigating the necessity of this feature...)
 
 ## Installation
 Clone with:
@@ -35,11 +44,7 @@ Clone with:
 git clone https://github.com/gibsjose/Rocket.git
 ```
 
-Then install:
-```bash
-cd Rocket
-python setup.py install
-```
+Then just move the `Rocket` folder to your desired location (`~/bin/` or `/usr/local/bin/`, perhaps?) and add it to your `PATH`.
 
 ## Usage
 The most basic usage is as follows:
@@ -80,18 +85,13 @@ The following file shows all **possible** options:
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
-
     "git": true,
-    "github create": false,
-    "github remote": "git@github.com:user/Rocket.git",
-    "github user": "user",
-
+    "git-push": false,
+    "git-remote": "git@github.com:user/repo.git",
     "language": "Python",
-
     "license": "MIT",
-
+    "license-url": "https://user.mit-license.org",
     "project": "Rocket",
-
     "websites": [
         "https://www.example.com",
         "https://github.com/user/example"
@@ -142,16 +142,15 @@ For Python, `rocket` will default to naming the main script, for example, `Rocke
 ```
 
 ## Git
-`rocket` can create a local (or remote, see below) `git` repository, complete with a language-specific `.gitignore` and a project-specific `README.md`
+`rocket` can create a local (or remote, see below) `git` repository, complete with a language-specific `.gitignore` and a project-specific `README.md`.
 
-## GitHub
-`rocket` uses `hub create` to create the new GitHub repository. It then runs `git push --set-upstream origin master` to make the first push to the master branch of the remote repository.
+If you supply a `git-remote` in `config.json`, it will also set up that remote to push to, assuming it is a valid remote.
+
+Finally, if you supply a valid `git-remote` and set `git-push` to `true`, `rocket` will automatically add, commit, and push your initial commit with the base project files.
 
 ## Credits
 * Generic C and C++ Makefile: [@mbcrawfo](https://github.com/mbcrawfo/GenericMakefile)
-* Generic AVR Makefile
 * Generic Arduino Makefile: [@sudar](https://github.com/sudar/Arduino-Makefile)
-* Generic Python skeleton code
 * Generic `.gitignore` files: [@github](https://github.com/github/gitignore)
 * MIT License template: [@remy](https://github.com/remy/mit-license)
 
