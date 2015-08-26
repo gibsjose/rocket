@@ -734,17 +734,16 @@ def main():
     print('Rocket!')
     print('-------')
 
-    # Make sure this is not being executed in the install directory
+    # Make sure Rocket is not being executed in the install directory
+    if os.getcwd() == os.path.dirname(os.path.realpath(sys.argv[0])):
+        raise Exception('You do not want to execute \'rocket\' in it\'s own directory...')
 
-    if options.verbose:
-        print('OPTIONS')
-        print('-------')
-        if options.language:
-            print('\tLanguage: ' + options.language)
+    # Ask user to continue if the directory is not empty
+    if os.listdir(os.getcwd()):
+        if not input('You really should run \'rocket\' in an empty directory... Continue? [Y/n] ') == 'Y':
+            return 0
 
-        if options.config:
-            print('\tConfiguring with \'config.json\'')
-
+    # Execute command
     if options.remove:
         directory = os.getcwd()
         print('\n>>> Removing existing project files >>>')
@@ -757,7 +756,7 @@ def main():
         print('\n>>> Generating a blank ' + options.language + ' project >>>')
         rocket.Generate(options.language)
         print('<<< Generated skeleton ' + options.language + ' project <<<')
-        print('<<< Edit the \'./config.json\' file with your project settings and run \'Rocket -c\' to finish <<<')
+        print('<<< Edit the \'./config.json\' file with your project settings and run \'rocket -c\' to finish <<<')
 
     elif options.config:
         rocket = Rocket()
