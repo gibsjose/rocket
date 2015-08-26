@@ -8,5 +8,5 @@ setup(name='rocket',
     author='Joe Gibson',
     author_email='gibsjose@mail.gvsu.edu',
     url='https://github.com/gibsjose/Rocket',
-    packages=['rocket'],
+    packages=['inflection'],
     )
