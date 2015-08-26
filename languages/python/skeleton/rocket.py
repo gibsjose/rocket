@@ -9,44 +9,55 @@
 #   {WEBSITES}
 
 from enum import Enum
-import sys, os, traceback, optparse
+import sys
+import os
+import traceback
+import argparse
 import re
 import operator
 import time
 
 def main():
-    global options, args
+    global args
 
-    if options.verbose:
+    if args.verbose:
         print('OPTIONS')
         print('-------')
-        print('\tFlag: ' + str(options.flag))
+        print('\tFlag: ' + str(args.flag))
 
-        if options.file:
-            print('\tFile: ' + options.file)
+    if args.command == 'print':
+        print(args.choice)
 
-    print('Rocket!')
+    elif args.command == 'hello':
+        print('Hey there!')
+
+    else:
+        print('Rocket!')
 
 if __name__ == '__main__':
     try:
         start_time = time.time()
-        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='%prog 0.1.0')
 
-        parser.add_option('-f', '--file', action='store', type='string', dest='file', help='file')
+        parser = argparse.ArgumentParser(prog='rocket', description='some awesome new Python script')
 
-        parser.add_option('-F', '--flag', action='store_true', default=False, help='flag')
+        # Options
+        parser.add_argument('-v', '--verbose', action='store_true', default=False, help='verbose mode')
+        parser.add_argument('-f', '--flag', action='store_true', default=False, help='useless flag')
 
-        parser.add_option('-v', '--verbose', action='store_true', default=False, help='verbose mode')
+        # Commands
+        subparsers = parser.add_subparsers(help='commands:', dest='command')
 
-        (options, args) = parser.parse_args()
+        run_parser = subparsers.add_parser('print', help='print something')
+        run_parser.add_argument('choice', type=str.lower, help='stuff to print', choices=['hello', 'goodbye'])
 
-        # if not options.file:
-        #     parser.error('missing argument: -f FILE')
+        hello_parser = subparsers.add_parser('hello', help='say helllo')
+
+        args = parser.parse_args()
 
         main()
-        if options.verbose: print('\n' + time.asctime())
-        if options.verbose: print('Total Runtime: ', end='')
-        if options.verbose: print(str((time.time() - start_time) * 1000) + ' ms')
+        if args.verbose: print('\n' + time.asctime())
+        if args.verbose: print('Total Runtime: ', end='')
+        if args.verbose: print(str((time.time() - start_time) * 1000) + ' ms')
         sys.exit(0)
     except KeyboardInterrupt as e: # Ctrl-C
         raise e
