@@ -9,6 +9,8 @@
 #   http://gibsjose.com
 #   http://github.com/gibsjose/Rocket
 
+# @TODO Look into using inflection library for camel-case, etc. https://inflection.readthedocs.org/en/latest/
+
 # Essentials
 from enum import Enum
 from glob import glob
