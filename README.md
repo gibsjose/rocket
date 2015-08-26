@@ -2,8 +2,9 @@
 Configurable C, C++, and Python base project generator
 
 ## Description
-`rocket` generates a new project folder with skeleton code with auto-generated header comment blocks, and a simple `main`. Creating and running a fully functional C++ project is as simple as:
+`rocket` generates a new project folder with skeleton code, auto-generated header comment blocks, and a simple `main`.
 
+Creating and running a fully functional C++ project is as simple as:
 ```bash
 rocket create C++ "Awesome New Project"
 rocket config
@@ -36,34 +37,23 @@ git clone https://github.com/gibsjose/Rocket.git
 Then install:
 ```bash
 cd Rocket
-sudo ./install
+python setup.py install
 ```
 
 ## Usage
-First, create a new project directory and name it something clever, like `Project`:
-
+The most basic usage is as follows:
 ```bash
-cd ~
-mkdir "Project"
+rocket create Python 'Clever Name'
+cd 'Clever Name'
+# Edit the generated 'config.json' file
+rocket config
 ```
 
-Then hop into the newly created directory and run Rocket:
-```bash
-cd Project
-Rocket -l C++
-```
-
-This will create a new C++ project in the `Project` directory, including a `config.json` configuration file. Edit `config.json` with your project's name, your name and email, and any other details, then run:
-
-```bash
-Rocket -c
-```
-
-And you're done!
+> NOTE: Unless you are currently inside an **empty** directory called 'Clever Name', in the above example, `rocket` will create a new directory to house your project.
 
 To remove project files, run:
 ```bash
-Rocket -r
+rocket clean
 ```
 
 ## Project Configuration
