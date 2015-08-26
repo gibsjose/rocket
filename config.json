@@ -4,9 +4,8 @@
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
     "git": true,
-    "github-create": false,
-    "github-remote": "git@github.com:user/example.git",
-    "github-user": "user",
+    "github-push": false,
+    "github-remote": "",
     "language": "Python",
     "license": "MIT",
     "license-url": "https://user.mit-license.org",
