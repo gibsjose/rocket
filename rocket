@@ -12,7 +12,10 @@
 # Essentials
 from enum import Enum
 from glob import glob
-import sys, os, traceback, optparse
+import sys
+import os
+import traceback
+import argparse
 import re
 import operator
 import time
@@ -120,9 +123,9 @@ class Configuration:
         """
         self.data = {}
 
-    def Modify(self, in_file, out_file, language_string):
+    def Modify(self, in_file, out_file, language_string, project):
         """
-        Read in the JSON `in_file`, modify the language attribute, and write it out as the JSON `out_file`
+        Read in the JSON `in_file`, modify the language and project attributes, and write it out as the JSON `out_file`
         """
         # Check if config file exists
         if not os.path.exists(in_file):
@@ -133,7 +136,10 @@ class Configuration:
             self.data = json.loads(in_fp.read())
 
             # Modify language string
-            self.data["language"] = language_string
+            self.data['language'] = language_string
+
+            # Modify project string
+            self.data['project'] = project
 
         with open(out_file, 'w', encoding='utf-8') as out_fp:
             # Write JSON data
@@ -352,7 +358,7 @@ class CommentFiller:
         #Move new file
         shutil.move(abs_path, filepath)
 
-        print('\t> Updated ' + os.path.basename(filepath))
+        print('\t> Configured ' + os.path.basename(filepath))
 
 class MakefileFiller:
     """
@@ -395,7 +401,7 @@ class MakefileFiller:
         #Move new file
         shutil.move(abs_path, filepath)
 
-        print('\t> Updated ' + os.path.basename(filepath))
+        print('\t> Configured ' + os.path.basename(filepath))
 
 
 class FileNamer:
@@ -517,18 +523,18 @@ class FileNamer:
                 if f.endswith(s):
                     self.files.append(src_directory + f)
 
-        print('\t> Renaming the following files:')
-        for f in self.files:
-            print('\t\t* ' + os.path.basename(f))
+        # print('\t> Renaming the following files:')
+        # for f in self.files:
+        #     print('\t\t* ' + os.path.basename(f))
 
         # Rename all files
         self.renamed = []
         for f in self.files:
             self.renamed.append(self.RenameFile(f))
 
-        print('\t> to:')
-        for f in self.renamed:
-            print('\t\t* ' + os.path.basename(f))
+        # print('\t> to:')
+        # for f in self.renamed:
+        #     print('\t\t* ' + os.path.basename(f))
 
         return self.renamed
 
@@ -556,7 +562,7 @@ class Rocket:
         """
         self.language = Language.unknown
 
-    def Generate(self, language):
+    def Generate(self, language, project):
         """
         Generates the skeleton code, makefiles (if necessary), gitignore
         files, etc. and generates a default `config.json` object with the correct language
@@ -585,7 +591,7 @@ class Rocket:
         # Write a default `config.json` file with the correct language
         # Read in the default file, change the language attribute, and write it
         self.configuration = Configuration()
-        self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language_name)
+        self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language_name, project)
         print('\t> Created default ' + language + ' configuration file \'./config.json\'')
 
         # @TODO Make this more modular by using the language's 'language.json' file and a LanguageConfiguration object
@@ -673,7 +679,7 @@ class Rocket:
         # if self.configuration.github_create:
         #     # Create GitHub account using `hub`, if installed
 
-    def Clear(self):
+    def Clean(self):
         """
         Remove generated project files in the current directory
         """
@@ -728,7 +734,7 @@ def main():
     """
     Rocket main
     """
-    global options, args
+    global args
 
     print('-------')
     print('Rocket!')
@@ -738,27 +744,27 @@ def main():
     if os.getcwd() == os.path.dirname(os.path.realpath(sys.argv[0])):
         raise Exception('You do not want to execute \'rocket\' in it\'s own directory...')
 
-    # Ask user to continue if the directory is not empty
-    if os.listdir(os.getcwd()):
-        if not input('You really should run \'rocket\' in an empty directory... Continue? [Y/n] ') == 'Y':
-            return 0
-
     # Execute command
-    if options.remove:
+    if args.command == 'clean':
         directory = os.getcwd()
         print('\n>>> Removing existing project files >>>')
         rocket = Rocket()
-        if not rocket.Clear():
+        if not rocket.Clean():
             print('<<< Project files removed <<<')
 
-    elif options.language:
+    elif args.command == 'create':
+        # Ask user to continue if the directory is not empty
+        if os.listdir(os.getcwd()):
+            if not input('You really should run \'rocket create\' in an empty directory... Continue? [Y/n] ') == 'Y':
+                return 0
+
         rocket = Rocket()
-        print('\n>>> Generating a blank ' + options.language + ' project >>>')
-        rocket.Generate(options.language)
-        print('<<< Generated skeleton ' + options.language + ' project <<<')
+        print('\n>>> Generating a blank ' + args.language + ' project named \'' + args.project + '\' >>>')
+        rocket.Generate(args.language, args.project)
+        print('<<< Generated skeleton ' + args.language + ' project <<<')
         print('<<< Edit the \'./config.json\' file with your project settings and run \'rocket -c\' to finish <<<')
 
-    elif options.config:
+    elif args.command == 'config':
         rocket = Rocket()
         print('\n>>> Configuring the project >>>')
         rocket.Config()
@@ -770,22 +776,29 @@ def main():
 if __name__ == '__main__':
     try:
         start_time = time.time()
-        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='0.1.0')
 
-        parser.add_option('-l', '--language', action='store', type='string', dest='language', help='language')
+        parser = argparse.ArgumentParser(prog='rocket', description='generate a base project in C, C++, or Python')
 
-        parser.add_option('-c', '--config', action='store_true', default=False, help='Configure project using config.json file')
+        # Options
+        parser.add_argument('-v', '--verbose', action='store_true', default=False, help='verbose mode')
 
-        parser.add_option('-r', '--remove', action='store_true', default=False, help='Remove all project files if they exist')
+        # Commands
+        subparsers = parser.add_subparsers(help='commands:', dest='command')
 
-        parser.add_option('-v', '--verbose', action='store_true', default=False, help='verbose mode')
+        create_parser = subparsers.add_parser('create', help='create a new project')
+        create_parser.add_argument('language', type=str.lower, help='project language', choices=['c', 'c++', 'cpp', 'python'])
+        create_parser.add_argument('project', help='project name')
 
-        (options, args) = parser.parse_args()
+        config_parser = subparsers.add_parser('config', help='configure a project')
+
+        clean_parser  = subparsers.add_parser('clean', help='remove all project files')
+
+        args = parser.parse_args()
 
         main()
-        if options.verbose: print('\n' + time.asctime())
-        if options.verbose: print('Total Runtime: ', end='')
-        if options.verbose: print(str((time.time() - start_time) * 1000) + ' ms')
+        if args.verbose: print('\n' + time.asctime())
+        if args.verbose: print('Total Runtime: ', end='')
+        if args.verbose: print(str((time.time() - start_time) * 1000) + ' ms')
         sys.exit(0)
     except KeyboardInterrupt as e: # Ctrl-C
         raise e
@@ -794,7 +807,7 @@ if __name__ == '__main__':
     except Exception as e:
         print('\n<-- Exception: ', end='')
         print(str(e), end=' -->\n\n')
-        if(options.verbose):
+        if(args.verbose):
             traceback.print_exc()
 
         os._exit(1)
