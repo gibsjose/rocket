@@ -33,8 +33,7 @@ from pprint import pprint
 import shutil
 
 # Call shell commands for `git`
-from subprocess import call
-from subprocess import check_output
+import subprocess
 
 class Language(Enum):
     """
@@ -228,20 +227,20 @@ class Configuration:
                 self.git = False
 
             # GitHub
-            if 'github-create' in self.data:
-                self.github_create = self.data['github-create']
+            # if 'github-create' in self.data:
+            #     self.github_create = self.data['github-create']
+            # else:
+            #     self.github_create = False
+
+            if 'github-push' in self.data:
+                self.github_push = self.data['github-push']
             else:
-                self.github_create = False
+                self.github_push = None
 
             if 'github-remote' in self.data:
                 self.github_remote = self.data['github-remote']
             else:
                 self.github_remote = None
-
-            if 'github-user' in self.data:
-                self.github_user = self.data['github-user']
-            else:
-                self.github_user = None
 
     def Print(self):
         print('Project: ' + self.project)
@@ -707,13 +706,45 @@ class Rocket:
                     gi.write(file_namer.name)
 
             # Run `git init`
-            out = check_output("git init", shell=True, universal_newlines=True)
-            print('\t> ' + str(out))
+            out = subprocess.check_output("git init", shell=True, universal_newlines=True)
+            print('\t> ' + str(out), end='')
 
-        # # @TODO
-        # # If project includes a GitHub account, either add or create remote
-        # if self.configuration.github_create:
-        #     # Create GitHub account using `hub`, if installed
+        # Set `origin` and set to push refs
+        if self.configuration.github_remote:
+            try:
+                out = subprocess.check_output('git remote add origin ' + self.configuration.github_remote, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+
+                try:
+                    out = subprocess.check_output('git config --get remote.origin.url', shell=True, universal_newlines=True)
+                    print('\t> git remote origin: ' + str(out), end='')
+
+                    if self.configuration.github_push:
+                        try:
+                            # Add files
+                            subprocess.check_output('git add .', shell=True, universal_newlines=True)
+
+                            # Initial commit
+                            subprocess.check_output('git commit -m \'Inital commit\'', shell=True, universal_newlines=True)
+
+                            # Push
+                            out = subprocess.check_output('git push -u origin master', stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+
+                            print('\t> ' + str(out).replace('\n', '\n\t  '), end='')
+
+                            # Show commit object hash
+                            out = subprocess.check_output('git log --pretty=format:\'%h\' -n 1', shell=True, universal_newlines=True)
+
+                            print('\n\t> Pushed initial commit ' + str(out).replace('\n', '...'))
+
+                        except subprocess.CalledProcessError as e:
+                            print('\t* Unable to push initial commit:\n\t  ' + e.output.replace('\n', '\n\t  '))
+
+                except subprocess.CalledProcessError as e:
+                    print('\t* Error getting remote: ' + e.output)
+
+            except subprocess.CalledProcessError as e:
+                print('\t* Error adding remote: ' + e.output, end='')
+                print('\t* Try running \'rm -rf .git/; rocket config\' to REMOVE ALL GIT FILES and re-configure')
 
     def Clean(self):
         """
@@ -786,7 +817,7 @@ def main():
         print('\n>>> Removing existing project files >>>')
         rocket = Rocket()
         if not rocket.Clean():
-            print('<<< Project files removed <<<')
+            print('<<< Project files removed <<<\n')
 
     elif args.command == 'create':
         print('\n>>> Generating a blank ' + args.language + ' project named \'' + args.project + '\' >>>')
@@ -810,13 +841,13 @@ def main():
         rocket = Rocket()
         rocket.Generate(args.language, args.project)
         print('<<< Generated skeleton ' + args.language + ' project <<<')
-        print('<<< Edit the \'config.json\' file with your project settings and run \'rocket config\' to finish <<<')
+        print('<<< Edit the \'config.json\' file with your project settings and run \'rocket config\' to finish <<<\n')
 
     elif args.command == 'config':
         rocket = Rocket()
         print('\n>>> Configuring the project >>>')
         rocket.Config()
-        print('<<< Configured \'' + rocket.configuration.project + '\' <<<')
+        print('<<< Configured \'' + rocket.configuration.project + '\' <<<\n')
 
     else:
         raise Exception('Must specify language with \'-l LANGUAGE\' or run config with \'-c\' or \'--config\'')
