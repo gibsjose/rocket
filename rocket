@@ -753,13 +753,25 @@ def main():
             print('<<< Project files removed <<<')
 
     elif args.command == 'create':
-        # Ask user to continue if the directory is not empty
-        if os.listdir(os.getcwd()):
-            if not input('You really should run \'rocket create\' in an empty directory... Continue? [Y/n] ') == 'Y':
-                return 0
+        print('\n>>> Generating a blank ' + args.language + ' project named \'' + args.project + '\' >>>')
+
+        path, dirname = os.path.split(os.getcwd())
+
+        # Directory already has project name
+        if args.project == dirname:
+            #Non-empty named directory: Prompt user
+            if os.listdir(os.getcwd()):
+                if not input('You really should run \'rocket create\' in an empty directory... Continue? [Y/n] ') == 'Y':
+                    return 0
+
+        # Directory has different name
+        else:
+            # Make directory named after project and enter it
+            os.makedirs(args.project)
+            os.chdir(args.project)
+            print('\t> Created project directory: \'' + os.path.dirname(os.getcwd() + '/') + '\'')
 
         rocket = Rocket()
-        print('\n>>> Generating a blank ' + args.language + ' project named \'' + args.project + '\' >>>')
         rocket.Generate(args.language, args.project)
         print('<<< Generated skeleton ' + args.language + ' project <<<')
         print('<<< Edit the \'./config.json\' file with your project settings and run \'rocket -c\' to finish <<<')
