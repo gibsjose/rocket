@@ -34,6 +34,7 @@ import shutil
 
 # Call shell commands for `git`
 from subprocess import call
+from subprocess import check_output
 
 class Language(Enum):
     """
@@ -212,7 +213,13 @@ class Configuration:
             if 'license' in self.data:
                 self.license = self.data['license']
             else:
-                self.license = 'None'
+                self.license = None
+
+            # License URL
+            if 'license-url' in self.data:
+                self.license_url = self.data['license-url']
+            else:
+                self.license_url = None
 
             # Git
             if 'git' in self.data:
@@ -221,20 +228,20 @@ class Configuration:
                 self.git = False
 
             # GitHub
-            if 'github create' in self.data:
-                self.github_create = self.data['github create']
+            if 'github-create' in self.data:
+                self.github_create = self.data['github-create']
             else:
                 self.github_create = False
 
-            if 'github remote' in self.data:
-                self.github_remote = self.data['github remote']
+            if 'github-remote' in self.data:
+                self.github_remote = self.data['github-remote']
             else:
-                self.github_remote = 'None'
+                self.github_remote = None
 
-            if 'github user' in self.data:
-                self.github_user = self.data['github user']
+            if 'github-user' in self.data:
+                self.github_user = self.data['github-user']
             else:
-                self.github_user = 'None'
+                self.github_user = None
 
     def Print(self):
         print('Project: ' + self.project)
@@ -300,6 +307,29 @@ class CommentFiller:
                     if '{TITLE}' in line:
                         new_file.write(line.replace('{TITLE}', self.configuration.project))
 
+                    # {DD MONTH YYYY}
+                    elif '{DD MONTH YYYY}' in line:
+                        new_file.write(line.replace('{DD MONTH YYYY}', self.configuration.date))
+
+                    # {LICENSE}
+                    elif '{LICENSE}' in line:
+                        license = 'License: '
+
+                        if self.configuration.license:
+                            if not self.configuration.license_url:
+                                license += self.configuration.license
+                            else:
+                                license += self.configuration.license + ' ('
+
+                        if self.configuration.license_url:
+                            if not self.configuration.license:
+                                license += self.configuration.license_url
+                            else:
+                                license += self.configuration.license_url + ')'
+
+                        if self.configuration.license or self.configuration.license_url:
+                            new_file.write(line.replace('{LICENSE}', license))
+
                     # {AUTHORS}
                     elif '{AUTHORS}' in line:
                         first_author = self.configuration.authors[0]
@@ -321,10 +351,6 @@ class CommentFiller:
                                     new_file.write('#\t' + auth + '\n')
                                 else:
                                     new_file.write('*\t' + auth + '\n')
-
-                    # {DD MONTH YYYY}
-                    elif '{DD MONTH YYYY}' in line:
-                        new_file.write(line.replace('{DD MONTH YYYY}', self.configuration.date))
 
                     # {WEBSITES}
                     elif '{WEBSITES}' in line:
@@ -548,7 +574,8 @@ class FileNamer:
 
         if not self.language_configuration.extension:
             for s in self.language_configuration.sources:
-                new_name.replace(s, '')
+                print('\t> Dropping \'' + s + '\' extension')
+                new_name = new_name.replace(s, '')
 
         os.rename(filepath, new_name)
 
@@ -671,10 +698,17 @@ class Rocket:
 
             # Copy the `.gitignore`
             shutil.copy(rocket_directory + '/languages/' + language_name + '/' + language_name + '.gitignore', directory + '/.gitignore')
-            print('\tCreated ' + self.configuration.language_string + ' \'./.gitignore\'')
+            print('\t> Created ' + self.configuration.language_string + ' \'./.gitignore\'')
+
+            # Add executable name to .gitignore for non-Python projects
+            if not self.configuration.language == Language.python:
+                with open(directory + '/.gitignore', 'a') as gi:
+                    gi.write('\n# Actual binary\n')
+                    gi.write(file_namer.name)
 
             # Run `git init`
-            call("git init", shell=True)
+            out = check_output("git init", shell=True, universal_newlines=True)
+            print('\t> ' + str(out))
 
         # # @TODO
         # # If project includes a GitHub account, either add or create remote
@@ -776,7 +810,7 @@ def main():
         rocket = Rocket()
         rocket.Generate(args.language, args.project)
         print('<<< Generated skeleton ' + args.language + ' project <<<')
-        print('<<< Edit the \'./config.json\' file with your project settings and run \'rocket -c\' to finish <<<')
+        print('<<< Edit the \'config.json\' file with your project settings and run \'rocket config\' to finish <<<')
 
     elif args.command == 'config':
         rocket = Rocket()
