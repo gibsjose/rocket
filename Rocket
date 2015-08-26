@@ -264,7 +264,9 @@ class CommentFiller:
         """
         Intelligently replace comments in files based on language type
         """
-        for f in files:
+        self.files = files
+
+        for f in self.files:
             self.ReplaceInFile(f)
 
     def ReplaceInFile(self, filepath):
@@ -278,6 +280,12 @@ class CommentFiller:
         fh, abs_path = tempfile.mkstemp()
         with open(abs_path,'w') as new_file:
             with open(filepath) as old_file:
+                # Get header file name
+                for f in self.files:
+                    regex = re.compile(r'^.+\.h$')
+                    if regex.match(f):
+                        header = os.path.basename(f)
+
                 for line in old_file:
                     # {TITLE}
                     if '{TITLE}' in line:
@@ -300,7 +308,7 @@ class CommentFiller:
                                 if 'email' in author:
                                     auth += ' (' + author['email'] + ')'
 
-                                new_file.write('\n*\t' + auth)
+                                new_file.write('*\t' + auth + '\n')
 
                     # {DD MONTH YYYY}
                     elif '{DD MONTH YYYY}' in line:
@@ -314,11 +322,16 @@ class CommentFiller:
                             webs_iter = iter(self.configuration.websites)
                             next(webs_iter)
                             for website in webs_iter:
-                                new_file.write('\n*\t' + website)
+                                new_file.write('*\t' + website + '\n')
 
-                    # @TODO If '.c' or '.cpp' also need to edit '#include "rocket.h"'
+                    # Header guards
+                    elif '{GUARD}' in line:
+                        guard = self.configuration.project.replace(' ', '_').upper() + '_H'
+                        new_file.write(line.replace('{GUARD}', guard))
 
-                    # @TODO If '.h' also need to edit '#ifndef ...'
+                    # Includes
+                    elif '{HEADER}' in line:
+                        new_file.write(line.replace('{HEADER}', header))
 
                     else:
                         new_file.write(line)
@@ -344,12 +357,39 @@ class MakefileFiller:
         """
         self.configuration = configuration
 
-    def Replace(self, filepath):
+    def Replace(self, filepath, binary):
         """
         Replace the makefile variables with actual data
         """
         if self.configuration.language == Language.python:
             return
+
+        if not os.path.exists(filepath):
+            raise Exception('Cannot modify \'' + filepath + '\': Does not exist')
+
+        #Create temp file
+        fh, abs_path = tempfile.mkstemp()
+        with open(abs_path,'w') as new_file:
+            with open(filepath) as old_file:
+                for line in old_file:
+                    # {BIN}
+                    if '{BIN}' in line:
+                        new_file.write(line.replace('{BIN}', binary))
+
+                    else:
+                        new_file.write(line)
+
+        # Close file
+        os.close(fh)
+
+        #Remove original file
+        os.remove(filepath)
+
+        #Move new file
+        shutil.move(abs_path, filepath)
+
+        print('\t> Updated ' + filepath)
+
 
 class FileNamer:
     """
@@ -600,7 +640,7 @@ class Rocket:
         comment_filler.Replace(files)
 
         makefile_filler = MakefileFiller(self.configuration)
-        makefile_filler.Replace(directory + '/makefile')
+        makefile_filler.Replace(directory + '/makefile', file_namer.name)
 
         # If project will be a `git` repo add `.gitignore` and `README.md`
         if self.configuration.git:
