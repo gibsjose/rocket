@@ -5,11 +5,15 @@ Configurable C, C++, and Python base project generator
 `rocket` generates a new project folder with skeleton code with auto-generated header comment blocks, and a simple `main`. Creating and running a fully functional C++ project is as simple as:
 
 ```bash
-rocket C++ "Awesome New Project"
+rocket create C++ "Awesome New Project"
 rocket config
 make
 ./AwesomeNewProject
 ```
+
+Hate the skeleton code I included? No problem – just modify the templates or drop your own files into the global `Rocket/languages/...` directory!
+
+Hate other template/style choices? Again, just edit the language config files ('language.js') or roll your own!
 
 ## Features
 * Generates directory structure and skeleton code
