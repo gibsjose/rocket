@@ -18,6 +18,7 @@ import operator
 import time
 import datetime
 import tempfile
+import stat
 
 # JSON and Pretty Print
 import json
@@ -308,7 +309,10 @@ class CommentFiller:
                                 if 'email' in author:
                                     auth += ' (' + author['email'] + ')'
 
-                                new_file.write('*\t' + auth + '\n')
+                                if self.configuration.language == Language.python:
+                                    new_file.write('#\t' + auth + '\n')
+                                else:
+                                    new_file.write('*\t' + auth + '\n')
 
                     # {DD MONTH YYYY}
                     elif '{DD MONTH YYYY}' in line:
@@ -322,7 +326,10 @@ class CommentFiller:
                             webs_iter = iter(self.configuration.websites)
                             next(webs_iter)
                             for website in webs_iter:
-                                new_file.write('*\t' + website + '\n')
+                                if self.configuration.language == Language.python:
+                                    new_file.write('#\t' + website + '\n')
+                                else:
+                                    new_file.write('*\t' + website + '\n')
 
                     # Header guards
                     elif '{GUARD}' in line:
@@ -345,7 +352,7 @@ class CommentFiller:
         #Move new file
         shutil.move(abs_path, filepath)
 
-        print('\t> Updated ' + filepath)
+        print('\t> Updated ' + os.path.basename(filepath))
 
 class MakefileFiller:
     """
@@ -388,7 +395,7 @@ class MakefileFiller:
         #Move new file
         shutil.move(abs_path, filepath)
 
-        print('\t> Updated ' + filepath)
+        print('\t> Updated ' + os.path.basename(filepath))
 
 
 class FileNamer:
@@ -449,7 +456,7 @@ class FileNamer:
                 return
 
             elif naming == 'underscores' or naming == 'underscore':
-                self.name = self.SpacesToUnderscores(self.congifuration.project)
+                self.name = self.SpacesToUnderscores(self.configuration.project)
                 return
 
             elif naming == 'camel-case' or naming == 'camelcase' or naming == 'camel_case':
@@ -501,7 +508,7 @@ class FileNamer:
         directory = os.getcwd()
 
         if language == Language.python:
-            src_directory = directory
+            src_directory = directory + '/'
         else:
             src_directory = directory + '/src/'
 
@@ -512,16 +519,16 @@ class FileNamer:
 
         print('\t> Renaming the following files:')
         for f in self.files:
-            print('\t\t* ' + f)
+            print('\t\t* ' + os.path.basename(f))
 
         # Rename all files
         self.renamed = []
         for f in self.files:
             self.renamed.append(self.RenameFile(f))
 
-        print('\t> Renamed files to:')
+        print('\t> to:')
         for f in self.renamed:
-            print('\t\t* ' + f)
+            print('\t\t* ' + os.path.basename(f))
 
         return self.renamed
 
@@ -568,11 +575,6 @@ class Rocket:
             language_name = 'unknown'
             raise Exception('Unknown language')
 
-        # @TODO Decide on using 'which()' method or the 'os.path.dirname()' method
-        # Get the Rocket executable directory, which contains the templates
-        # rocket_directory = shutil.which('Rocket')
-        # if not rocket_directory:
-        #     raise Exception('Rocket executable path could not be found: Check your installation!')
         rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
         print('\t> Copying from Rocket directory: ' + rocket_directory)
 
@@ -584,8 +586,9 @@ class Rocket:
         # Read in the default file, change the language attribute, and write it
         self.configuration = Configuration()
         self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language_name)
-        print('\t> Created default ' + language + 'configuration file \'./config.json\'')
+        print('\t> Created default ' + language + ' configuration file \'./config.json\'')
 
+        # @TODO Make this more modular by using the language's 'language.json' file and a LanguageConfiguration object
         # Make directories and copy files as needed for specific languages
         if (self.language == Language.c) or (self.language == Language.cpp) or (self.language == Language.avr_c) or (self.language == Language.avr_cpp):
             # Create necessary directories
@@ -606,6 +609,10 @@ class Rocket:
             # Copy the makefile
             shutil.copy(rocket_directory + '/languages/' + language_name + '/makefile', directory)
             print('\t> Created ' + language + ' \'./makefile\'')
+
+        elif self.language == Language.python:
+            shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.py', directory)
+            print('\t> Created skeleton \'.py\' file')
 
     def Config(self):
         """
@@ -641,6 +648,11 @@ class Rocket:
 
         makefile_filler = MakefileFiller(self.configuration)
         makefile_filler.Replace(directory + '/makefile', file_namer.name)
+
+        # Re-apply executable privilages for Python scripts
+        if self.configuration.language == Language.python:
+            for f in files:
+                os.chmod(f, stat.S_IRWXU)
 
         # If project will be a `git` repo add `.gitignore` and `README.md`
         if self.configuration.git:
@@ -721,6 +733,8 @@ def main():
     print('-------')
     print('Rocket!')
     print('-------')
+
+    # Make sure this is not being executed in the install directory
 
     if options.verbose:
         print('OPTIONS')
