@@ -709,7 +709,7 @@ class Rocket:
             print('\t> ' + str(out), end='')
 
         # Set `origin` and set to push refs
-        if self.configuration.git_remote:
+        if self.configuration.git and self.configuration.git_remote:
             try:
                 out = subprocess.check_output('git remote add origin ' + self.configuration.git_remote, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
 
@@ -748,9 +748,12 @@ class Rocket:
             except subprocess.CalledProcessError as e:
                 print('\t! Error adding remote: ' + e.output, end='')
                 print('\t! Try running \'rm -rf .git/; rocket config\' to REMOVE ALL GIT FILES and re-configure')
-        else:
-            if self.configuration.git_push:
-                print('\t* Warning: You configured to \'push\' the git repo but you did not provide a valid repo...')
+
+        elif not self.configuration.git and self.configuration.git_remote:
+            print('\t! Error: You specified to add a git remote but NOT to create a git repo...')
+
+        elif not self.configuration.git_remote and self.configuration.git_push:
+            print('\t* Warning: You configured to \'push\' the git repo but you did not provide a valid repo...')
 
     def Clean(self):
         """
