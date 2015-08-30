@@ -10,8 +10,9 @@
 #   http://github.com/gibsjose/Rocket
 
 # @TODO Look into using inflection library for camel-case, etc. https://inflection.readthedocs.org/en/latest/
+#       Inflection will solve the bug where naming projects certain ways results in their naming being incorrect
 # @TODO Make the `extension` attribute for Python have a local override in `config.json` to more easily decide on using `.py` extension
-# @TODO Add `{AUTHOR-NAME}` and `{AUTHOR-EMAIL}` tags instead of just `{AUTHOR}` to more easily customize the comments
+# @TODO Use `{AUTHOR-NAME}` and `{AUTHOR-EMAIL}` tags instead of just `{AUTHOR}` to more easily customize the comments
 # @TODO FIX: When there are no `websites` or `license` specified, there is an extra line in the comment header...
 
 # Essentials
