@@ -710,6 +710,10 @@ class Rocket:
                 out = subprocess.check_output('git remote add origin ' + self.configuration.git_remote, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
 
                 try:
+                    # Call this and discard output to ensure the remote was added properly
+                    subprocess.check_output('git remote show origin', stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+
+                    # Use this output (it is much cleaner) for displaying remote name
                     out = subprocess.check_output('git config --get remote.origin.url', shell=True, universal_newlines=True)
                     print('\t> git remote origin: ' + str(out), end='')
 
@@ -732,14 +736,17 @@ class Rocket:
                             print('\n\t> Pushed initial commit ' + str(out).replace('\n', '...'))
 
                         except subprocess.CalledProcessError as e:
-                            print('\t* Unable to push initial commit:\n\t  ' + e.output.replace('\n', '\n\t  '))
+                            print('\t! Unable to push initial commit:\n\t  ' + e.output.replace('\n', '\n\t  '))
 
                 except subprocess.CalledProcessError as e:
-                    print('\t* Error getting remote: ' + e.output)
+                    print('\t! Error getting remote:\n\t  ' + e.output.replace('\n', '\n\t  '))
 
             except subprocess.CalledProcessError as e:
-                print('\t* Error adding remote: ' + e.output, end='')
-                print('\t* Try running \'rm -rf .git/; rocket config\' to REMOVE ALL GIT FILES and re-configure')
+                print('\t! Error adding remote: ' + e.output, end='')
+                print('\t! Try running \'rm -rf .git/; rocket config\' to REMOVE ALL GIT FILES and re-configure')
+        else:
+            if self.configuration.git_push:
+                print('\t* Warning: You configured to \'push\' the git repo but you did not provide a valid repo...')
 
     def Clean(self):
         """
