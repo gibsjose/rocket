@@ -689,6 +689,7 @@ class Rocket:
             with open(directory + '/README.md', 'w') as readme:
                 readme.write('# ' + self.configuration.project + '\n')
                 readme.write(self.configuration.date + '\n')
+                # @TODO Write license/other info here
 
             # Copy the `.gitignore`
             shutil.copy(rocket_directory + '/languages/' + language_name + '/' + language_name + '.gitignore', directory + '/.gitignore')
