@@ -9,10 +9,6 @@
 #   http://gibsjose.com
 #   http://github.com/gibsjose/Rocket
 
-# Local Modules
-from rocket.language import Language
-import rocket.configuration
-
 # Essential Modules
 import sys
 import os
@@ -23,20 +19,24 @@ import stat
 # Other Modules
 import shutil       # File Copying, `which()`, etc.
 
+# Local Modules
+from rocket.language import Language
+import rocket.configuration
+
 class FileNamer:
     """
     Renames files with appropriate name
     """
-    def __init__(self, configuration):
+    def __init__(self, configuration, r_dir):
         """
         Sets configuration values and parses language config, if it exists
         """
         self.configuration = configuration
 
-        self.rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
-        language_file = self.rocket_directory + '/languages/' + self.configuration.language_name + '/language.json'
+        self.dir = r_dir
+        language_file = self.dir + '/languages/' + self.configuration.language_name + '/language.json'
 
-        self.language_configuration = LanguageConfiguration()
+        self.language_configuration = rocket.configuration.LanguageConfiguration()
         self.language_configuration.Decode(language_file)
 
     def SpacesToUnderscores(self, word):

@@ -9,9 +9,6 @@
 #   http://gibsjose.com
 #   http://github.com/gibsjose/Rocket
 
-# Local Modules
-from rocket.language import Language
-
 # Essential Modules
 import sys
 import os
@@ -24,6 +21,10 @@ import datetime
 import json         # JSON
 import shutil       # File Copying, `which()`, etc.
 import subprocess   # Call shell commands for `git`
+
+# Local Modules
+from rocket.language import Language
+import rocket.language
 
 class LanguageConfiguration:
     """
@@ -136,14 +137,14 @@ class Configuration:
 
             # Language (enum)
             lang = self.language_string.lower()
-            if lang in LanguageDictionary:
-                self.language = LanguageDictionary[lang]
+            if lang in rocket.language.LanguageDictionary:
+                self.language = rocket.language.LanguageDictionary[lang]
             else:
                 self.language = Language.unknown
                 raise Exception('Unknown language')
 
             # Language (official name)
-            self.language_name = LanguageNameDictionary[self.language_string]
+            self.language_name = rocket.language.LanguageNameDictionary[self.language_string]
 
             # Project name
             if 'project' not in self.data:

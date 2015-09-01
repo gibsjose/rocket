@@ -21,3 +21,25 @@ class Language(Enum):
     avr_c = 3
     avr_cpp = 4
     python = 5
+
+# Global language dictionary
+LanguageDictionary = {
+    'c': Language.c,
+    'cpp': Language.cpp,
+    'c++': Language.cpp,
+    'avr-c': Language.avr_c,
+    'avr-cpp': Language.avr_cpp,
+    'avr-c++': Language.avr_cpp,
+    'python': Language.python
+}
+
+# Matches language names with their template directory name
+LanguageNameDictionary = {
+    'c': 'c',
+    'cpp': 'cpp',
+    'c++': 'cpp',
+    'avr-c': 'avr-c',
+    'avr-cpp': 'avr-cpp',
+    'avr-c++': 'avr-cpp',
+    'python': 'python'
+}

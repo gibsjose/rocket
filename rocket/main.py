@@ -16,12 +16,6 @@
 # @TODO Use `{AUTHOR-NAME}` and `{AUTHOR-EMAIL}` tags instead of just `{AUTHOR}` to more easily customize the comments
 # @TODO FIX: When there are no `websites` or `license` specified, there is an extra line in the comment header...
 
-# Local Modules
-from rocket.language import Language
-import rocket.configuration
-import rocket.filler
-import rocket.namer
-
 # Essential Modules
 from enum import Enum
 import sys
@@ -40,6 +34,13 @@ import glob
 import json         # JSON
 import shutil       # File Copying, `which()`, etc.
 import subprocess   # Call shell commands for `git`
+
+# Local Modules
+from rocket.language import Language
+import rocket.language
+import rocket.configuration
+import rocket.filler
+import rocket.namer
 
 # Global language dictionary
 LanguageDictionary = {
@@ -72,6 +73,7 @@ class Rocket:
         Rocket default constructor
         """
         self.language = Language.unknown
+        self.dir = os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
 
     def Create(self, language, project):
         """
@@ -92,8 +94,7 @@ class Rocket:
             language_name = 'unknown'
             raise Exception('Unknown language')
 
-        rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
-        print('\t> Copying from Rocket directory: ' + rocket_directory)
+        print('\t> Copying from Rocket directory: ' + self.dir)
 
         # Pull correct files and copy them to local directory
         directory = os.getcwd()
@@ -102,7 +103,7 @@ class Rocket:
         # Write a default `config.json` file with the correct language
         # Read in the default file, change the language attribute, and write it
         self.configuration = rocket.configuration.Configuration()
-        self.configuration.Modify(rocket_directory + '/config.json', directory + '/config.json', language_name, project)
+        self.configuration.Modify(self.dir + '/config.json', directory + '/config.json', language_name, project)
         print('\t> Created default ' + language + ' configuration file \'./config.json\'')
 
         # @TODO Make this more modular by using the language's 'language.json' file and a LanguageConfiguration object
@@ -115,20 +116,20 @@ class Rocket:
 
             # Copy the skeleton code
             if (self.language == Language.c) or (self.language == Language.avr_c):
-                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.c', directory + '/src/')
-                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.h', directory + '/src/')
+                shutil.copy(self.dir + '/languages/' + language_name + '/skeleton/rocket.c', directory + '/src/')
+                shutil.copy(self.dir + '/languages/' + language_name + '/skeleton/rocket.h', directory + '/src/')
                 print('\t> Created skeleton \'.c\' and \'.h\' files in \'./src/\'')
             else:
-                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.cpp', directory + '/src/')
-                shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.h', directory + '/src/')
+                shutil.copy(self.dir + '/languages/' + language_name + '/skeleton/rocket.cpp', directory + '/src/')
+                shutil.copy(self.dir + '/languages/' + language_name + '/skeleton/rocket.h', directory + '/src/')
                 print('\t> Created skeleton \'.cpp\' and \'.h\' files in \'./src/\'')
 
             # Copy the makefile
-            shutil.copy(rocket_directory + '/languages/' + language_name + '/makefile', directory)
+            shutil.copy(self.dir + '/languages/' + language_name + '/makefile', directory)
             print('\t> Created ' + language + ' \'./makefile\'')
 
         elif self.language == Language.python:
-            shutil.copy(rocket_directory + '/languages/' + language_name + '/skeleton/rocket.py', directory)
+            shutil.copy(self.dir + '/languages/' + language_name + '/skeleton/rocket.py', directory)
             print('\t> Created skeleton \'.py\' file')
 
     def Config(self):
@@ -152,11 +153,10 @@ class Rocket:
         print('\t> Detected project name: ' + self.configuration.project)
 
         # Modify skeleton files/makefiles with data from `config.json`
-        rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
         directory = os.getcwd()
 
         # Rename skeleton code files to project name
-        file_namer = rocket.namer.FileNamer(self.configuration)
+        file_namer = rocket.namer.FileNamer(self.configuration, self.dir)
         files = file_namer.Rename()
 
         # Modify skeleton code (and makefile if necessary)
@@ -180,7 +180,7 @@ class Rocket:
                 # @TODO Write license/other info here
 
             # Copy the `.gitignore`
-            shutil.copy(rocket_directory + '/languages/' + language_name + '/' + language_name + '.gitignore', directory + '/.gitignore')
+            shutil.copy(self.dir + '/languages/' + language_name + '/' + language_name + '.gitignore', directory + '/.gitignore')
             print('\t> Created ' + self.configuration.language_string + ' \'./.gitignore\'')
 
             # Add executable name to .gitignore for non-Python projects
@@ -244,7 +244,6 @@ class Rocket:
         """
         Remove generated project files in the current directory
         """
-        rocket_directory = os.path.dirname(os.path.realpath(sys.argv[0]))
         directory = os.getcwd()
 
         # Make sure user knows exactly which directory they are in
@@ -253,7 +252,7 @@ class Rocket:
             return 1
 
         # Have at least *some* sanity check...
-        if directory == rocket_directory:
+        if directory == self.dir:
             raise Exception('Removing here would remove Rocket\'s files...')
         elif directory == '/':
             raise Exception('You do not really want to remove \'' + directory + '\', right...?')

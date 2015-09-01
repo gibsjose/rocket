@@ -9,14 +9,16 @@
 #   http://gibsjose.com
 #   http://github.com/gibsjose/Rocket
 
-# Local Modules
-from rocket.language import Language
-import rocket.configuration
-
 # Essential Modules
 import sys
 import os
 import re
+import tempfile
+import shutil
+
+# Local Modules
+from rocket.language import Language
+import rocket.configuration
 
 class CommentFiller:
     """
