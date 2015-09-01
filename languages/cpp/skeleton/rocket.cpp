@@ -3,11 +3,11 @@
 *
 *   {DD MONTH YYYY}
 *
-*   {AUTHORS}
+*   {AUTHOR-NAME} ({AUTHOR-EMAIL})
 *
 *   {LICENSE}
 *
-*   {WEBSITES}
+*   {WEBSITE}
 **********************************************************/
 
 #include <iostream>

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Run main script with all arguments
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+$DIR/../rocket/main.py "$@"
