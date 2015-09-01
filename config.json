@@ -3,7 +3,7 @@
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
-    "git": true,
+    "git": false,
     "git-push": false,
     "git-remote": "",
     "language": "Python",
