@@ -41,10 +41,10 @@ Hate other template/style choices? Again, just edit the language config files ('
 ## Installation
 Clone with:
 ```bash
-git clone https://github.com/gibsjose/Rocket.git
+git clone https://github.com/gibsjose/rocket.git
 ```
 
-Then just move the `Rocket` folder to your desired location (`~/bin/` or `/usr/local/bin/`, perhaps?) and add it to your `PATH`.
+Then just move the `rocket` folder to your desired location (`~/bin/` or `/usr/local/bin/`, perhaps?) and add the `rocket/bin` directory to your `PATH`.
 
 ## Usage
 The most basic usage is as follows:
