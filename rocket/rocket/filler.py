@@ -47,98 +47,102 @@ class CommentFiller:
             raise Exception('Cannot modify \'' + filepath + '\': Does not exist')
 
         #Create temp file
-        fh, abs_path = tempfile.mkstemp()
-        with open(abs_path,'w') as new_file:
-            with open(filepath) as old_file:
+        new_fh, new_path = tempfile.mkstemp()
+        with open(new_path,'w') as new_file:
+            with open(filepath, 'r+') as old_file:
                 # Get header file name
                 for f in self.files:
                     regex = re.compile(r'^.+\.h$')
                     if regex.match(f):
                         header = os.path.basename(f)
 
-                for line in old_file:
-                    # {TITLE}
-                    if '{TITLE}' in line:
-                        new_file.write(line.replace('{TITLE}', self.configuration.project))
+                # First make as many lines as are needed for the authors/websites/etc. in a temp file
+                temp_fh, temp_path = tempfile.mkstemp()
+                with open(temp_path,'w') as temp_file:
+                    for line in old_file:
+                        if ('{AUTHOR-NAME}' in line) or ('{AUTHOR-EMAIL}' in line):
+                            for author in self.configuration.authors:
+                                temp_file.write(line)
+                        elif '{WEBSITE}' in line:
+                            for website in self.configuration.websites:
+                                temp_file.write(line)
+                        elif '{LICENSE}':
+                            if self.configuration.license or self.configuration.license_url:
+                                temp_file.write(line)
+                        else:
+                            temp_file.write(line)
 
-                    # {DD MONTH YYYY}
-                    elif '{DD MONTH YYYY}' in line:
-                        new_file.write(line.replace('{DD MONTH YYYY}', self.configuration.date))
+                    author_index = 0
+                    website_index = 0
 
-                    # {LICENSE}
-                    elif '{LICENSE}' in line:
-                        license = 'License: '
+                with open(temp_path,'r') as temp_file:
+                    for line in temp_file:
+                        # {TITLE}
+                        if '{TITLE}' in line:
+                            new_file.write(line.replace('{TITLE}', self.configuration.project))
 
-                        if self.configuration.license:
-                            if not self.configuration.license_url:
-                                license += self.configuration.license
-                            else:
-                                license += self.configuration.license + ' ('
+                        # {DD MONTH YYYY}
+                        elif '{DD MONTH YYYY}' in line:
+                            new_file.write(line.replace('{DD MONTH YYYY}', self.configuration.date))
 
-                        if self.configuration.license_url:
-                            if not self.configuration.license:
-                                license += self.configuration.license_url
-                            else:
-                                license += self.configuration.license_url + ')'
+                        # {LICENSE}
+                        elif '{LICENSE}' in line:
+                            license = 'License: '
 
-                        if self.configuration.license or self.configuration.license_url:
-                            new_file.write(line.replace('{LICENSE}', license))
-
-                    # {AUTHORS}
-                    elif '{AUTHORS}' in line:
-                        first_author = self.configuration.authors[0]
-                        auth = first_author['name'];
-                        if 'email' in first_author:
-                            auth += ' (' + first_author['email'] + ')'
-
-                        new_file.write(line.replace('{AUTHORS}', auth))
-
-                        if len(self.configuration.authors) > 1:
-                            auth_iter = iter(self.configuration.authors)
-                            next(auth_iter)
-                            for author in auth_iter:
-                                auth = author['name']
-                                if 'email' in author:
-                                    auth += ' (' + author['email'] + ')'
-
-                                if self.configuration.language == Language.python:
-                                    new_file.write('#\t' + auth + '\n')
+                            if self.configuration.license:
+                                if not self.configuration.license_url:
+                                    license += self.configuration.license
                                 else:
-                                    new_file.write('*\t' + auth + '\n')
+                                    license += self.configuration.license + ' ('
 
-                    # {WEBSITES}
-                    elif '{WEBSITES}' in line:
-                        if len(self.configuration.websites) > 0:
-                            new_file.write(line.replace('{WEBSITES}', self.configuration.websites[0]))
-
-                            webs_iter = iter(self.configuration.websites)
-                            next(webs_iter)
-                            for website in webs_iter:
-                                if self.configuration.language == Language.python:
-                                    new_file.write('#\t' + website + '\n')
+                            if self.configuration.license_url:
+                                if not self.configuration.license:
+                                    license += self.configuration.license_url
                                 else:
-                                    new_file.write('*\t' + website + '\n')
+                                    license += self.configuration.license_url + ')'
 
-                    # Header guards
-                    elif '{GUARD}' in line:
-                        guard = self.configuration.project.replace(' ', '_').upper() + '_H'
-                        new_file.write(line.replace('{GUARD}', guard))
+                            if self.configuration.license or self.configuration.license_url:
+                                new_file.write(line.replace('{LICENSE}', license))
 
-                    # Includes
-                    elif '{HEADER}' in line:
-                        new_file.write(line.replace('{HEADER}', header))
+                        # {AUTHOR-NAME} and {AUTHOR-EMAIL}
+                        elif '{AUTHOR-NAME}' in line or '{AUTHOR-EMAIL}' in line:
+                            auth = self.configuration.authors[author_index]
+                            auth_name = auth['name'];
+                            if 'email' in auth:
+                                auth_email = auth['email']
+                            else:
+                                auth_email = ''
 
-                    else:
-                        new_file.write(line)
+                            new_line = line.replace('{AUTHOR-NAME}', auth_name)
+                            new_line = new_line.replace('{AUTHOR-EMAIL}', auth_email)
 
-        # Close file
-        os.close(fh)
+                            new_file.write(new_line)
+
+                            author_index += 1
+
+                        # {WEBSITE}
+                        elif '{WEBSITE}' in line:
+                            website = self.configuration.websites[website_index]
+                            new_file.write(line.replace('{WEBSITE}', website))
+
+                        # Header guards
+                        elif '{GUARD}' in line:
+                            guard = self.configuration.project.replace(' ', '_').upper() + '_H'
+                            new_file.write(line.replace('{GUARD}', guard))
+
+                        # Includes
+                        elif '{HEADER}' in line:
+                            new_file.write(line.replace('{HEADER}', header))
+
+                        # Write all other lines as they are
+                        else:
+                            new_file.write(line)
 
         #Remove original file
         os.remove(filepath)
 
         #Move new file
-        shutil.move(abs_path, filepath)
+        shutil.move(new_path, filepath)
 
         print('\t> Configured ' + os.path.basename(filepath))
 
@@ -163,8 +167,8 @@ class MakefileFiller:
             raise Exception('Cannot modify \'' + filepath + '\': Does not exist')
 
         #Create temp file
-        fh, abs_path = tempfile.mkstemp()
-        with open(abs_path,'w') as new_file:
+        new_fh, new_path = tempfile.mkstemp()
+        with open(new_path,'w') as new_file:
             with open(filepath) as old_file:
                 for line in old_file:
                     # {BIN}
@@ -174,13 +178,10 @@ class MakefileFiller:
                     else:
                         new_file.write(line)
 
-        # Close file
-        os.close(fh)
-
         #Remove original file
         os.remove(filepath)
 
         #Move new file
-        shutil.move(abs_path, filepath)
+        shutil.move(new_path, filepath)
 
         print('\t> Configured ' + os.path.basename(filepath))
