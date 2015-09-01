@@ -2,11 +2,13 @@
 
 #   {TITLE}
 #
-#   {AUTHORS}
-#
 #   {DD MONTH YYYY}
 #
-#   {WEBSITES}
+#   {AUTHOR-NAME} ({AUTHOR-EMAIL})
+#
+#   {LICENSE}
+#
+#   {WEBSITE}
 
 from enum import Enum
 import sys
