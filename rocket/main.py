@@ -12,8 +12,11 @@
 # @TODO Look into using inflection library for camel-case, etc. https://inflection.readthedocs.org/en/latest/
 #       Inflection will solve the bug where naming projects certain ways results in their naming being incorrect
 # @TODO Make the `extension` attribute for Python have a local override in `config.json` to more easily decide on using `.py` extension
+# @TODO ^^^^^ Maybe there is a `config.json` in each language folder??? Probably best!
 # @TODO Add support for {DATE} formatting... i.e. '{DD MONTH YYYY}' or '{MM.DD.YYYY}', etc.
 # @TODO FIX: When there are no `websites` or `license` specified, there is an extra line in the comment header...
+# @TODO Add support for either Python 2 or 3
+# @TODO Add an `simple` T/F attribute to Python config.json. Use current structure, etc. when True, otherwise use the project structure used for Rocket...
 
 # Essential Modules
 from enum import Enum
