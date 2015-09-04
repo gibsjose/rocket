@@ -125,6 +125,8 @@ class CommentFiller:
                             website = self.configuration.websites[website_index]
                             new_file.write(line.replace('{WEBSITE}', website))
 
+                            website_index += 1
+
                         # Header guards
                         elif '{GUARD}' in line:
                             guard = self.configuration.project.replace(' ', '_').upper() + '_H'
