@@ -85,6 +85,7 @@ The following file shows all **possible** options:
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
+    "description": "Some sweet new project!",
     "git": true,
     "git-push": false,
     "git-remote": "git@github.com:user/repo.git",
