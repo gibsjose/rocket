@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 #   {TITLE}
+#   {DESCRIPTION}
 #
 #   {DD MONTH YYYY}
 #

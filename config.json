@@ -3,15 +3,16 @@
         {"name": "John Engineer", "email": "john@engineer.com"},
         {"name": "Joe Scientist", "email": "joe@scientist.com"}
     ],
+    "description": "Some sweet new project!",
     "git": false,
     "git-push": false,
     "git-remote": "",
     "language": "Python",
     "license": "MIT",
-    "license-url": "https://user.mit-license.org",
+    "license-url": "http://user.mit-license.org",
     "project": "Rocket",
     "websites": [
-        "https://www.example.com",
+        "https://example.com",
         "https://github.com/user/example"
     ]
 }

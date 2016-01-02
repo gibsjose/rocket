@@ -120,6 +120,10 @@ class CommentFiller:
 
                             author_index += 1
 
+                        elif '{DESCRIPTION}' in line:
+                            description = self.configuration.description
+                            new_file.write(line.replace('{DECRIPTION}', description))
+
                         # {WEBSITE}
                         elif '{WEBSITE}' in line:
                             website = self.configuration.websites[website_index]
