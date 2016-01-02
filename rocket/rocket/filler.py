@@ -120,6 +120,7 @@ class CommentFiller:
 
                             author_index += 1
 
+                        # {DESCRIPTION}
                         elif '{DESCRIPTION}' in line:
                             description = self.configuration.description
 
