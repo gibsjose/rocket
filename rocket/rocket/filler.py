@@ -122,7 +122,9 @@ class CommentFiller:
 
                         elif '{DESCRIPTION}' in line:
                             description = self.configuration.description
-                            new_file.write(line.replace('{DECRIPTION}', description))
+                            
+                            if description:
+                                new_file.write(line.replace('{DECRIPTION}', description))
 
                         # {WEBSITE}
                         elif '{WEBSITE}' in line:

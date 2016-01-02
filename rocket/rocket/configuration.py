@@ -160,6 +160,11 @@ class Configuration:
                 if 'name' not in author:
                     raise Exception('Authors must have \'name\' attribute')
 
+            if 'description' in self.data:
+                self.description = self.data['description']
+            else:
+                self.description = ''
+
             # Websites
             if 'websites' in self.data:
                 self.websites = self.data['websites']
